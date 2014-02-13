@@ -84,8 +84,6 @@ class MesosaurusScheduler(private val _taskSource: TaskSource)
     log.info("Scheduler.offerRescinded")
   }
 
-  private var _nTasksTerminated = 0;
-
   /**
     * Invoked when the status of a task has changed (e.g., a slave is
     * lost and so the task is lost, a task finishes and an executor

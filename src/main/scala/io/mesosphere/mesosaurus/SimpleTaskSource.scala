@@ -5,17 +5,17 @@ import org.apache.mesos.Protos._
 /**
   * Generates infos for a fixed number of small tasks, one for each offer received.
   */
-class SimpleTaskSource(private val _nTasksRequested: Int) extends TaskSource {
+class SimpleTaskSource(requestedTasks :Int) extends TaskSource(requestedTasks) {
 
-  private var _nTasksCreated = 0;
+  private var createdTasks = 0;
 
   def doneCreatingTasks(): Boolean = {
-    return _nTasksCreated >= _nTasksRequested
+    return createdTasks >= requestedTasks
   }
 
   private def createTaskInfo(slaveID: SlaveID): TaskInfo = {
     val taskID = TaskID.newBuilder()
-      .setValue(Integer.toString(_nTasksCreated))
+      .setValue(Integer.toString(createdTasks))
       .build();
     System.out.println("Launching task " + taskID.getValue());
     return TaskInfo.newBuilder()
@@ -37,12 +37,8 @@ class SimpleTaskSource(private val _nTasksRequested: Int) extends TaskSource {
   def generateTaskInfos(offer: Offer): java.util.Collection[TaskInfo] = {
     val taskInfos = new java.util.ArrayList[TaskInfo]();
     taskInfos.add(createTaskInfo(offer.getSlaveId()));
-    _nTasksCreated += 1;
+    createdTasks += 1;
     return taskInfos;
-  }
-
-  def done(): Boolean = {
-    return nTasksTerminated >= _nTasksCreated && doneCreatingTasks();
   }
 
 }
