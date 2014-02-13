@@ -41,24 +41,8 @@ class SimpleTaskSource(private val _nTasksRequested: Int) extends TaskSource {
     return taskInfos;
   }
 
-  private var _nTasksTerminated = 0;
-
-  def observeTaskStatusUpdate(taskStatus: TaskStatus) = {
-    taskStatus.getState() match {
-      case TaskState.TASK_FINISHED |
-        TaskState.TASK_FAILED |
-        TaskState.TASK_KILLED |
-        TaskState.TASK_LOST => {
-        _nTasksTerminated += 1;
-      }
-      case TaskState.TASK_STAGING |
-        TaskState.TASK_STARTING |
-        TaskState.TASK_RUNNING =>
-    }
-  }
-
   def done(): Boolean = {
-    return _nTasksTerminated >= _nTasksCreated && doneCreatingTasks();
+    return nTasksTerminated >= _nTasksCreated && doneCreatingTasks();
   }
 
 }

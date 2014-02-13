@@ -8,6 +8,9 @@ import org.apache.mesos.Protos._
   */
 trait TaskSource {
 
+  def start() {
+  }
+
   /**
     * Whether any more tasks will be created.
     * This is supposed to be queried by the scheduler to determine when to decline all offers.
@@ -26,7 +29,25 @@ trait TaskSource {
     */
   def generateTaskInfos(offer: Offer): java.util.Collection[TaskInfo]
 
-  def observeTaskStatusUpdate(taskStatus: TaskStatus)
+  private var _nTasksTerminated = 0;
+
+  def nTasksTerminated(): Int = {
+    return _nTasksTerminated
+  }
+
+  def observeTaskStatusUpdate(taskStatus: TaskStatus) = {
+    taskStatus.getState() match {
+      case TaskState.TASK_FINISHED |
+        TaskState.TASK_FAILED |
+        TaskState.TASK_KILLED |
+        TaskState.TASK_LOST => {
+        _nTasksTerminated += 1;
+      }
+      case TaskState.TASK_STAGING |
+        TaskState.TASK_STARTING |
+        TaskState.TASK_RUNNING =>
+    }
+  }
 
   private val _executorUri = new java.io.File("./mesosaurus-executor").getCanonicalPath()
 

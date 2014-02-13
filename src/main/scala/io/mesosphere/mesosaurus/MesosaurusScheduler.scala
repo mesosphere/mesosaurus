@@ -23,6 +23,7 @@ class MesosaurusScheduler(private val _taskSource: TaskSource)
     frameworkId: FrameworkID,
     masterInfo: MasterInfo): Unit = {
     log.info("Scheduler.registered")
+    _taskSource.start();
   }
 
   /**

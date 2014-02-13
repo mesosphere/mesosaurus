@@ -34,7 +34,6 @@ object Mesosaurus extends Logging {
 
     val nTasks = 10; // TODO: configurable
     val taskSource = new SimpleTaskSource(nTasks); // TODO: configurable
-
     val scheduler = new MesosaurusScheduler(taskSource)
     val frameworkInfo = FrameworkInfo.newBuilder()
       .setName(frameworkName)
