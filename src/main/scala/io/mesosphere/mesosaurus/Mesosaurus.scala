@@ -22,7 +22,7 @@ object Mesosaurus extends Logging {
 
   private def parseCommandLine(args: Array[String]) = {
     val options = new cli.Options();
-    options.addOption("n", false, "display current time");
+    options.addOption("simple", false, "simple task generator");
   }
 
   // Execution entry point
@@ -32,8 +32,9 @@ object Mesosaurus extends Logging {
     val frameworkName = "Mesosaurus (Scala)"
     log.info("Hello from framework [{}]!", frameworkName)
 
-    val nTasks = 10; // TODO: configurable
-    val taskSource = new SimpleTaskSource(nTasks); // TODO: configurable
+    val requestedTasks = 10; // TODO: configurable
+    //val taskSource = new SimpleTaskSource(requestedTasks);
+    val taskSource = new PoissonTaskGenerator(requestedTasks, 100); // TODO: configurable
     val scheduler = new MesosaurusScheduler(taskSource)
     val frameworkInfo = FrameworkInfo.newBuilder()
       .setName(frameworkName)

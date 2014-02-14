@@ -5,7 +5,7 @@ import org.apache.mesos.Protos._
 /**
   * Generates infos for a fixed number of small tasks, one for each offer received.
   */
-class SimpleTaskSource(requestedTasks :Int) extends TaskSource(requestedTasks) {
+class SimpleTaskGenerator(requestedTasks: Int) extends TaskGenerator(requestedTasks) {
 
   private var createdTasks = 0;
 
