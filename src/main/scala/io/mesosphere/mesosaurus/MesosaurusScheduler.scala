@@ -9,7 +9,7 @@ import scala.collection.JavaConversions._
   *
   * Delegates to a task source to generate (task info) descriptions of tasks to run.
   */
-class MesosaurusScheduler(private val _taskSource: TaskGenerator)
+class MesosaurusScheduler(private val _taskGenerator: TaskGenerator)
     extends Scheduler with Logging {
 
   /**
@@ -23,7 +23,7 @@ class MesosaurusScheduler(private val _taskSource: TaskGenerator)
     frameworkId: FrameworkID,
     masterInfo: MasterInfo): Unit = {
     log.info("Scheduler.registered")
-    _taskSource.start();
+    _taskGenerator.start();
   }
 
   /**
@@ -56,7 +56,7 @@ class MesosaurusScheduler(private val _taskSource: TaskGenerator)
     * fail with a TASK_LOST status and a message saying as much).
     */
   def resourceOffers(driver: SchedulerDriver, offers: java.util.List[Offer]): Unit = {
-    if (_taskSource.doneCreatingTasks()) {
+    if (_taskGenerator.doneCreatingTasks()) {
       for (offer <- offers) {
         driver.declineOffer(offer.getId());
       }
@@ -64,7 +64,7 @@ class MesosaurusScheduler(private val _taskSource: TaskGenerator)
     else {
       log.info("Scheduler.resourceOffers")
       for (offer <- offers) {
-        val taskInfos = _taskSource.generateTaskInfos(offer);
+        val taskInfos = _taskGenerator.generateTaskInfos(offer);
         driver.launchTasks(offer.getId(), taskInfos, _filters);
       }
     }
@@ -96,8 +96,8 @@ class MesosaurusScheduler(private val _taskSource: TaskGenerator)
     */
   def statusUpdate(driver: SchedulerDriver, taskStatus: TaskStatus): Unit = {
     log.info("Scheduler.statusUpdate")
-    _taskSource.observeTaskStatusUpdate(taskStatus);
-    if (_taskSource.done()) {
+    _taskGenerator.observeTaskStatusUpdate(taskStatus);
+    if (_taskGenerator.done()) {
       driver.stop();
     }
   }

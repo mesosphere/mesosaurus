@@ -33,9 +33,9 @@ object Mesosaurus extends Logging {
     log.info("Hello from framework [{}]!", frameworkName)
 
     val requestedTasks = 10; // TODO: configurable
-    //val taskSource = new SimpleTaskSource(requestedTasks);
-    val taskSource = new PoissonTaskGenerator(requestedTasks, 100); // TODO: configurable
-    val scheduler = new MesosaurusScheduler(taskSource)
+    //val taskGenerator = new SimpletaskGenerator(requestedTasks);
+    val taskGenerator = new PoissonTaskGenerator(requestedTasks, 100); // TODO: configurable
+    val scheduler = new MesosaurusScheduler(taskGenerator)
     val frameworkInfo = FrameworkInfo.newBuilder()
       .setName(frameworkName)
       .setFailoverTimeout(failoverTimeoutMilliseconds)
