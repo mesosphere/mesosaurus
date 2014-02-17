@@ -12,44 +12,44 @@ import org.apache.commons.cli
   */
 object Mesosaurus extends Logging {
 
-  val defaultSettings = ConfigFactory.parseString("""
+    val defaultSettings = ConfigFactory.parseString("""
         mesos {
           	master = "localhost:5050"
     	}
     """)
 
-  val failoverTimeoutMilliseconds = 2 * 60 * 1000 // 2 minutes
+    val failoverTimeoutMilliseconds = 2 * 60 * 1000 // 2 minutes
 
-  private def parseCommandLine(args: Array[String]) = {
-    val options = new cli.Options();
-    options.addOption("simple", false, "simple task generator");
-  }
+    private def parseCommandLine(args: Array[String]) = {
+        val options = new cli.Options();
+        options.addOption("simple", false, "simple task generator");
+    }
 
-  // Execution entry point
-  def main(args: Array[String]): Unit = {
-    parseCommandLine(args);
+    // Execution entry point
+    def main(args: Array[String]): Unit = {
+        parseCommandLine(args);
 
-    val frameworkName = "Mesosaurus (Scala)"
-    log.info("Hello from framework [{}]!", frameworkName)
+        val frameworkName = "Mesosaurus (Scala)"
+        log.info("Hello from framework [{}]!", frameworkName)
 
-    val requestedTasks = 10; // TODO: configurable
-    //val taskGenerator = new SimpletaskGenerator(requestedTasks);
-    val taskGenerator = new PoissonTaskGenerator(requestedTasks, 100); // TODO: configurable
-    val scheduler = new MesosaurusScheduler(taskGenerator)
-    val frameworkInfo = FrameworkInfo.newBuilder()
-      .setName(frameworkName)
-      .setFailoverTimeout(failoverTimeoutMilliseconds)
-      .setUser("") // let Mesos assign the user
-      .setCheckpoint(false)
-      .build
-    val config = ConfigFactory.load.getConfig("io.mesosphere.mesosaurus").withFallback(defaultSettings)
-    val mesosMaster = config.getString("mesos.master")
-    val schedulerDriver = new MesosSchedulerDriver(scheduler, frameworkInfo, mesosMaster)
+        val requestedTasks = 10; // TODO: configurable
+        //val taskGenerator = new SimpletaskGenerator(requestedTasks);
+        val taskGenerator = new PoissonTaskGenerator(requestedTasks, 100); // TODO: configurable
+        val scheduler = new MesosaurusScheduler(taskGenerator)
+        val frameworkInfo = FrameworkInfo.newBuilder()
+            .setName(frameworkName)
+            .setFailoverTimeout(failoverTimeoutMilliseconds)
+            .setUser("") // let Mesos assign the user
+            .setCheckpoint(false)
+            .build
+        val config = ConfigFactory.load.getConfig("io.mesosphere.mesosaurus").withFallback(defaultSettings)
+        val mesosMaster = config.getString("mesos.master")
+        val schedulerDriver = new MesosSchedulerDriver(scheduler, frameworkInfo, mesosMaster)
 
-    val driverStatus = schedulerDriver.run()
-    val exitStatus = if (driverStatus == Status.DRIVER_STOPPED) 0 else 1;
-    schedulerDriver.stop();
-    System.exit(exitStatus);
-  }
+        val driverStatus = schedulerDriver.run()
+        val exitStatus = if (driverStatus == Status.DRIVER_STOPPED) 0 else 1;
+        schedulerDriver.stop();
+        System.exit(exitStatus);
+    }
 
 }

@@ -52,8 +52,9 @@ object MesosaurusBuild extends Build {
       "org.apache.mesos" % "mesos"           % "0.15.0",
       "com.typesafe"     % "config"          % "1.0.2",
       "org.slf4j"        % "slf4j-api"       % "1.7.2",
-      "ch.qos.logback"   % "logback-classic" % "1.0.9" % "runtime",
+      "ch.qos.logback"   % "logback-classic" % "1.0.9"   % "runtime",
       "commons-cli" 	 % "commons-cli" 	 % "1.2",
+      "junit" 			 % "junit" 			 % "4.11" 	 % "test",
       "org.scalatest"   %% "scalatest"       % "2.0.M5b" % "test"
     ),
 
@@ -78,7 +79,7 @@ object MesosaurusBuild extends Build {
   lazy val formatSettings = scalariformSettings ++ Seq(
     ScalariformKeys.preferences := FormattingPreferences()
       .setPreference(IndentWithTabs, false)
-      .setPreference(IndentSpaces, 2)
+      .setPreference(IndentSpaces, 4)
       .setPreference(AlignParameters, false)
       .setPreference(DoubleIndentClassDeclaration, true)
       .setPreference(MultilineScaladocCommentsStartOnFirstLine, false)
