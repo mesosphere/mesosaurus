@@ -53,7 +53,7 @@ object MesosaurusBuild extends Build {
       "com.typesafe"     % "config"          % "1.0.2",
       "org.slf4j"        % "slf4j-api"       % "1.7.2",
       "ch.qos.logback"   % "logback-classic" % "1.0.9"   % "runtime",
-      "commons-cli" 	 % "commons-cli" 	 % "1.2",
+      "net.sourceforge.argparse4j" 	 % "argparse4j" 	 % "0.4.3",
       "junit" 			 % "junit" 			 % "4.11" 	 % "test",
       "org.scalatest"   %% "scalatest"       % "2.0.M5b" % "test"
     ),
