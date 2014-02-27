@@ -5,24 +5,24 @@ import scala.util._
 /**
   * Deliver random numbers that are poisson-distributed around a given mean value.
   *
-  * Cutting off the top 0.1% of the cumulative arrival time distribution,
+  * The top 0.1% of the cumulative distribution are cut off below
   * to (arbitrarily and crudely, but somehow effectively) prevent extremely large results.
   *
-  * Poisson distribution formula, computing the probability that k arrivals happen during time t:
+  * Poisson distribution formula, computing the probability that k random events happen during time t:
   *
   * 	Pk(t) = ((lambda * t)^k / k!) * e^(-lambda * t)
   *
-  * Setting k = 0 yields the probability that no arrivals happen during time t:
+  * Setting k = 0 yields the probability that no random events happen during time t:
   *
   *  	P0(t) = e^(-lambda * t)
   *
-  * Resolving for t yields an arrival time distribution:
+  * Resolving for t yields an event time function for any assumed probability:
   *
   * 	t = -ln(1 - p) / lambda
   *
-  *  where p is any actual arrival distribution penetration value in the range [0.0|1.0[
-  *  and lambda is the mean arrival rate 1/n,
-  *  assuming on average n tasks arrive per time unit in which t is expressed.
+  *  where p is any actual event distribution penetration value in the range [0.0|1.0[
+  *  and lambda is the mean event rate 1/n,
+  *  assuming on average n events occur per time unit in which t is expressed.
   *  Substituting mean for lambda yields:
   *
   *  t = -ln(1 - p) * mean

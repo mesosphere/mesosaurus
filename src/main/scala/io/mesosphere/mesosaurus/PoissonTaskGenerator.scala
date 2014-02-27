@@ -5,7 +5,10 @@ import org.apache.mesos.Protos._
 /**
   * Generates tasks with poisson-distributed arrival time.
   */
-class PoissonTaskGenerator(requestedTasks: Int, meanArrivalMilliseconds: Int, offerAttempts: Int = 100) extends TaskGenerator(requestedTasks) {
+class PoissonTaskGenerator(requestedTasks: Int,
+						   meanTaskDuration :Int,
+						   meanArrivalMilliseconds: Int,
+						   offerAttempts: Int = 100) extends TaskGenerator(requestedTasks) {
 
     private var _createdTasks = 0
     private var _forfeitedTasks = 0

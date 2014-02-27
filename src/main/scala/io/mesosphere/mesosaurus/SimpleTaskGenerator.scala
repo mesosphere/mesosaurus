@@ -3,9 +3,9 @@ package io.mesosphere.mesosaurus
 import org.apache.mesos.Protos._
 
 /**
-  * Generates infos for a fixed number of small tasks, one for each offer received.
+  * Generates task infos for a fixed number of resource-light tasks, only one for each offer received.
   */
-class SimpleTaskGenerator(requestedTasks: Int) extends TaskGenerator(requestedTasks) {
+class SimpleTaskGenerator(requestedTasks: Int, taskDuration: Int) extends TaskGenerator(requestedTasks) {
 
   private var createdTasks = 0;
 

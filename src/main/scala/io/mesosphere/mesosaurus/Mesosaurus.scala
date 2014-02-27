@@ -13,21 +13,23 @@ import org.apache.mesos.Protos._
   * to simulate the statistical behavior of other (production use) frameworks.
   */
 object Mesosaurus extends Logging {
+	
+	// All time values in this entire program are in milliseconds, so:
+	private val SECOND = 1000
+	private val MINUTE = 60 * SECOND
+	
+	// Default configuration values:
+	private val DEFAULT_MESOS_MASTER = "localhost:5050"
+	private val DEFAULT_FAILOVER_TIMEOUT = 2 * MINUTE
+	private val DEFAULT_NUMBER_OF_TASKS = 10
+	private val DEFAULT_TASK_DURATION = 1 * SECOND
 
-    val defaultSettings = ConfigFactory.parseString("""
-        mesos {
-          	master = "localhost:5050"
-    	}
-    """)
-
-    val failoverTimeoutMilliseconds = 2 * 60 * 1000 // 2 minutes
-
-    private class UnsignedInt extends ArgumentType[Integer] {
-    	override def convert(parser: ArgumentParser, argument :Argument, value :String): Integer = {
+    private object UnsignedInteger extends ArgumentType[Int] {
+    	override def convert(parser: ArgumentParser, argument :Argument, value :String): Int = {
     		try {
-            	val n: Integer = Integer.parseInt(value)
+            	val n: Int = Integer.parseInt(value)
             	if (n < 0) {
-                	throw new ArgumentParserException(String.format("%d must not be negative", n), parser)
+                	throw new ArgumentParserException(String.format("%d must not be negative"), parser)
             	}
             	return n
         	} catch {
@@ -35,42 +37,61 @@ object Mesosaurus extends Logging {
         	}
     	}
     }
+   
+    private val MASTER = "-master"
+    private val FAILOVER = "-failover"
+    private val TASKS = "-tasks"
+    private val DURATION = "-duration"
+    private val GENERATOR = "generator"    	
+    private val SIMPLE = "simple"
+    private val POISSON = "poisson"
+    private val ARRIVE = "-arrive"
 
     private def defineCommandLineOptions(parser: ArgumentParser): Unit = {
-	    parser.addArgument("-tasks").help("# of tasks to launch")
+    	parser.addArgument(MASTER).help("Mesos master IP:port")
+    	parser.addArgument(FAILOVER).`type`(UnsignedInteger).help("failover timeout ms")
+    	parser.addArgument(TASKS).`type`(UnsignedInteger).help("# tasks to launch")
+    	parser.addArgument(DURATION).`type`(UnsignedInteger).help("mean task duration ms")
     	
-    	val subparsers = parser.addSubparsers().help("sub-command help")
-    	
-    	val simpleParser = subparsers.addParser("simple").help("simple task generator")
+    	val subparsers = parser.addSubparsers().dest(GENERATOR).title("subcommands").description("alternative task generators")
+ 
+    	val simpleParser = subparsers.addParser(SIMPLE).help("simple task generator")
 
-    	val poissonParser = subparsers.addParser("poisson").help("poisson task generator")
-    	poissonParser.addArgument("-arrive").`type`(new UnsignedInt()).choices(Arguments.range(Integer.valueOf(0), Integer.valueOf(Integer.MAX_VALUE))).help("mean task arrival time in millisecond")
+    	val poissonParser = subparsers.addParser(POISSON).help("poisson task generator")
+    	poissonParser.addArgument(ARRIVE).`type`(UnsignedInteger).help("mean task arrival time in millisecond")
     }
 
-    private def parseCommandLine(arguments: Array[String]): TaskGenerator = {
-        var requestedTasks = 100
-        var taskGenerator: TaskGenerator = null
-        var meanArrivalMilliseconds = 10
+    private def parseCommandLine(arguments: Array[String]): (String, Int, TaskGenerator) = {
         val parser = ArgumentParsers.newArgumentParser("mesosaurus")
             .defaultHelp(true)
             .description("benchmarking framework for Mesos")
         defineCommandLineOptions(parser)
         try {
-            val namespace = parser.parseArgs(arguments)
+        	val options = parser.parseArgs(arguments)
+        	val master = if (options.get(MASTER) != null) options.getString(MASTER) else DEFAULT_MESOS_MASTER 
+        	val failover = if (options.get(FAILOVER) != null) options.getInt(FAILOVER).intValue() else DEFAULT_FAILOVER_TIMEOUT 
+        	val tasks = if (options.get(TASKS) != null) options.getInt(TASKS).intValue() else DEFAULT_NUMBER_OF_TASKS
+        	val duration = if (options.get(DURATION) != null) options.getInt(DURATION).intValue() else DEFAULT_TASK_DURATION
+        	options.getString(GENERATOR) match {
+        		case SIMPLE => 
+        			return (master, failover, new SimpleTaskGenerator(tasks, duration))
+        		case POISSON => 
+        			val meanArrival = options.getInt(ARRIVE).intValue()
+        			return (master, failover, new PoissonTaskGenerator(tasks, duration, meanArrival))
+        		case _ =>
+        			throw new ArgumentParserException("no task generator specified", parser)
+        	}
         }
         catch {
             case e: ArgumentParserException =>
                 parser.handleError(e)
-                System.exit(1)
         }
-        taskGenerator = new SimpleTaskGenerator(requestedTasks)
-        taskGenerator = new PoissonTaskGenerator(requestedTasks, meanArrivalMilliseconds)
-        return taskGenerator
+        System.exit(1)
+        return null
     }
 
-    // Execution entry point
     def main(arguments: Array[String]): Unit = {
-        val taskGenerator = parseCommandLine(arguments)
+        val (mesosMaster, failoverTimeout, taskGenerator) = parseCommandLine(arguments)
         val scheduler = new MesosaurusScheduler(taskGenerator)
 
         val frameworkName = "Mesosaurus (Scala)"
@@ -78,12 +99,9 @@ object Mesosaurus extends Logging {
 
         val frameworkInfo = FrameworkInfo.newBuilder()
             .setName(frameworkName)
-            .setFailoverTimeout(failoverTimeoutMilliseconds)
-            .setUser("") // let Mesos assign the user
+            .setFailoverTimeout(failoverTimeout)
             .setCheckpoint(false)
             .build
-        val config = ConfigFactory.load.getConfig("io.mesosphere.mesosaurus").withFallback(defaultSettings)
-        val mesosMaster = config.getString("mesos.master")
         val schedulerDriver = new MesosSchedulerDriver(scheduler, frameworkInfo, mesosMaster)
 
         val driverStatus = schedulerDriver.run()
@@ -91,5 +109,4 @@ object Mesosaurus extends Logging {
         schedulerDriver.stop()
         System.exit(exitStatus)
     }
-
 }
