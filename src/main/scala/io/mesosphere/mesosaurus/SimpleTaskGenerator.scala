@@ -13,30 +13,31 @@ class SimpleTaskGenerator(requestedTasks: Int, taskDuration: Int) extends TaskGe
     return createdTasks >= requestedTasks
   }
 
-  private def createTaskInfo(slaveID: SlaveID): TaskInfo = {
+  private def createTaskInfo(offer: Offer): TaskInfo = {
     val taskID = TaskID.newBuilder()
       .setValue(Integer.toString(createdTasks))
       .build();
     System.out.println("Launching task " + taskID.getValue());
+    val offerResources = new Resources(offer)
     return TaskInfo.newBuilder()
       .setName("task " + taskID.getValue())
       .setTaskId(taskID)
-      .setSlaveId(slaveID)
+      .setSlaveId(offer.getSlaveId())
       .addResources(Resource.newBuilder()
         .setName("cpus")
         .setType(Value.Type.SCALAR)
-        .setScalar(Value.Scalar.newBuilder().setValue(1)))
+        .setScalar(Value.Scalar.newBuilder().setValue(offerResources.cpus)))
       .addResources(Resource.newBuilder()
         .setName("mem")
         .setType(Value.Type.SCALAR)
-        .setScalar(Value.Scalar.newBuilder().setValue(1)))
+        .setScalar(Value.Scalar.newBuilder().setValue(offerResources.mem)))
       .setExecutor(_executorInfo)
       .build();
   }
 
   def generateTaskInfos(offer: Offer): java.util.Collection[TaskInfo] = {
     val taskInfos = new java.util.ArrayList[TaskInfo]();
-    taskInfos.add(createTaskInfo(offer.getSlaveId()));
+    taskInfos.add(createTaskInfo(offer));
     createdTasks += 1;
     return taskInfos;
   }
