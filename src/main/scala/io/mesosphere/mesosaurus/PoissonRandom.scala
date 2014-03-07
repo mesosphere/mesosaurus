@@ -8,6 +8,9 @@ import scala.util._
   * The top 0.1% of the cumulative distribution are cut off below
   * to (arbitrarily and crudely, but somehow effectively) prevent extremely large results.
   *
+  * We use the inversion transformation method to derive random values from the distribution:
+  * http://en.wikipedia.org/wiki/Inverse_transform_sampling
+  * 
   * Poisson distribution formula, computing the probability that k random events happen during time t:
   *
   * 	Pk(t) = ((lambda * t)^k / k!) * e^(-lambda * t)
@@ -28,14 +31,18 @@ import scala.util._
   *  t = -ln(1 - p) * mean
   */
 class PoissonRandom(mean: Double) {
+	private val _epsilon = 0.001
     private val _seed = mean.toLong ^ System.currentTimeMillis;
     private val _random = new Random(_seed);
 
+    /**
+     * @return a random value with this distribution
+     */
     def next(): Double = {
         var p = 0.0
         do {
             p = _random.nextDouble() // in range [0.0|1.0]
-        } while (p > 0.999) // prevent extremely large and infinite end results caused by p close to 1.0
+        } while (p > 1 - _epsilon) // prevent extremely large and infinite end results caused by p close to 1.0
 
         val result = -math.log(1.0 - p) * mean;
         return result * 1.007 // compensate the actual mean for the truncated high end
