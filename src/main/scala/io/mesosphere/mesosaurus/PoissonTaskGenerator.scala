@@ -61,7 +61,6 @@ class PoissonTaskGenerator(requestedTasks: Int,
             val resources = new Resources(1, 100) // TODO
             val taskDescriptor = new TaskDescriptor(arrivalMilliSeconds, durationMilliSeconds, resources)
             _taskDescriptors.add(taskDescriptor)
-            taskDescriptor.print()
         }
     }
 

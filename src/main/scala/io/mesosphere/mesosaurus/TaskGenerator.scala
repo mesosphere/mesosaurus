@@ -8,6 +8,9 @@ import org.apache.mesos.Protos._
   */
 abstract class TaskGenerator(requestedTasks: Int) {
 
+  /**
+   * Callback from the scheduler when it starts.
+   */
   def start() {
   }
 
