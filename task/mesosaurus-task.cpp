@@ -16,7 +16,7 @@ const int work_loop = 100000;
 void usage(char **argv) {
   fprintf(stderr,
       "Usage: %s <duration (ms)> <number of cores> <average load (0.0 - 1.0)>"
-      " <average memory (bytes)>\n", argv[0]);
+      " <average memory (megabytes)>\n", argv[0]);
   exit(EXIT_FAILURE);
 }
 
@@ -133,6 +133,9 @@ int main(int argc, char** argv) {
     fprintf(stderr, "Error: Memory must be a positive integer.\n");
     usage(argv);
   }
+
+  // Convert from megabytes to bytes.
+  mem = mem * 1024 * 1024;
 
   vector<pthread_t*> threads;
   vector<work*> workloads;
