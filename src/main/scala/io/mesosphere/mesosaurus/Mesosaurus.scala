@@ -63,7 +63,7 @@ object Mesosaurus extends Logging {
     private object UnsignedDouble extends ArgumentType[Double] {
     	override def convert(parser: ArgumentParser, argument :Argument, value :String): Double = {
     		try {
-            	val n = java.lang.Double.parseDouble(toString)
+            	val n = java.lang.Double.parseDouble(value)
             	if (n < 0.0) {
                 	throw new ArgumentParserException(f"$n%f must not be negative", parser)
             	}
