@@ -24,6 +24,10 @@ import scala.util._
   * http://en.wikipedia.org/wiki/Rejection_sampling
   */
 class GaussRandom(mean: Double, sigma: Double, val definitionRangeSigmas: Int = 5) {
+	if (sigma <= 0) {
+		throw new IllegalArgumentException()
+	}
+	
 	private val _definitionRangeHalf = definitionRangeSigmas * sigma
     private val _seed = mean.toLong ^ sigma.toLong ^ System.currentTimeMillis;
     private val _random = new Random(_seed);

@@ -12,8 +12,8 @@ class TaskGenerator(requestedTasks: Int,
 					load :Double,
 					cpusMean :Double,
 					cpusSigma :Double,
-					memMean :Double,
-					memSigma: Double,
+					memMean :Long,
+					memSigma: Long,
 					offerAttempts: Int = 100) extends Logging {
 
     private var _createdTasks = 0
@@ -102,14 +102,14 @@ class TaskGenerator(requestedTasks: Int,
         val arrivalTimeRandom = new PoissonRandom(arrivalTimeMean)
         val durationRandom = new GaussRandom(taskDurationMean, taskDurationSigma)
         val cpusRandom = new GaussRandom(cpusMean, cpusSigma)
-        val memRandom = new GaussRandom(memMean, memSigma)
+        val memRandom = new GaussRandom(memMean.toDouble, memSigma.toDouble)
 
         var arrivalTime = 0
         for (i <- 0 until requestedTasks) {
             arrivalTime += arrivalTimeRandom.next().toInt
             val duration = durationRandom.next().toInt
             val cpus = cpusRandom.next()
-            val mem = memRandom.next()
+            val mem = memRandom.next().toLong
             val resources = new Resources(cpus, mem)
             val taskDescriptor = new TaskDescriptor(arrivalTime, duration, resources)
             _taskDescriptors.add(taskDescriptor)

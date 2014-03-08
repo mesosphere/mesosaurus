@@ -26,14 +26,29 @@ object Mesosaurus extends Logging {
 	private val DEFAULT_ARRIVAL_TIME = SECOND / 10
 	private val DEFAULT_LOAD = 0.5
 	private val DEFAULT_CPUS = 1
-	private val DEFAULT_MEM = 1
+	private val DEFAULT_MEM = 128
 	private val DEFAULT_SIGMA_FACTOR = 5
 
 	// A new command line parameter type for argparse4j that forces Int values to be positive
     private object UnsignedInteger extends ArgumentType[Int] {
     	override def convert(parser: ArgumentParser, argument :Argument, value :String): Int = {
     		try {
-            	val n: Int = Integer.parseInt(value)
+            	val n: Int = java.lang.Integer.parseInt(value)
+            	if (n < 0) {
+                	throw new ArgumentParserException(f"$n%d must not be negative", parser)
+            	}
+            	return n
+        	} catch {
+        		case e: NumberFormatException => throw new ArgumentParserException(e, parser)
+        	}
+    	}
+    }
+   
+	// A new command line parameter type for argparse4j that forces Int values to be positive
+    private object UnsignedLong extends ArgumentType[Long] {
+    	override def convert(parser: ArgumentParser, argument :Argument, value :String): Long = {
+    		try {
+            	val n: Long = java.lang.Long.parseLong(value)
             	if (n < 0) {
                 	throw new ArgumentParserException(f"$n%d must not be negative", parser)
             	}
@@ -86,8 +101,8 @@ object Mesosaurus extends Logging {
     	addOption(parser, LOAD).`type`(UnsignedDouble).help("load factor for every utilized CPU")
     	addOption(parser, CPUS).`type`(UnsignedDouble).help("mean # of cpus")
     	addOption(parser, CPUS_SIGMA).`type`(UnsignedDouble).help("cpus standard deviation")
-    	addOption(parser, MEM).`type`(UnsignedDouble).help("mean amount of memory in MB")
-    	addOption(parser, MEM_SIGMA).`type`(UnsignedDouble).help("memory standard deviation in MB")
+    	addOption(parser, MEM).`type`(UnsignedLong).help("mean # bytes of memory")
+    	addOption(parser, MEM_SIGMA).`type`(UnsignedLong).help("memory standard deviation in # bytes")
     }
 
     // Because Scala cannot disambiguate the overloaded Java method 
@@ -102,6 +117,10 @@ object Mesosaurus extends Logging {
     
     private def getInt(options :Namespace, name: String, defaultValue :Int) :Int = {
     	return if (options.get(name) != null) options.getInt(name).intValue() else defaultValue
+    }
+    
+    private def getLong(options :Namespace, name: String, defaultValue :Long) :Long = {
+    	return if (options.get(name) != null) options.getLong(name).intValue() else defaultValue
     }
     
     private def getDouble(options :Namespace, name: String, defaultValue :Double) :Double = {
@@ -121,14 +140,23 @@ object Mesosaurus extends Logging {
         	val duration = getInt(options, DURATION, DEFAULT_TASK_DURATION)
 			val arrival = getInt(options, ARRIVAL, DEFAULT_ARRIVAL_TIME)
 			val durationSigma = getInt(options, DURATION_SIGMA, duration / DEFAULT_SIGMA_FACTOR)
+			if (durationSigma <= 0) {
+				throw new ArgumentParserException("duration standard deviation must be > 0", parser)
+			}
 			val load = getDouble(options, LOAD, DEFAULT_LOAD)
 			if (load < 0 || load > 1) {
 				throw new ArgumentParserException("load must be between 0.0 and 1.0", parser)
 			}
 			val cpus = getDouble(options, CPUS, DEFAULT_CPUS)
 			val cpusSigma = getDouble(options, CPUS_SIGMA, cpus / DEFAULT_SIGMA_FACTOR)
-			val mem = getDouble(options, MEM, DEFAULT_CPUS)
-			val memSigma = getDouble(options, MEM_SIGMA, mem / DEFAULT_SIGMA_FACTOR)
+			if (cpusSigma <= 0) {
+				throw new ArgumentParserException("cpus standard deviation must be > 0", parser)
+			}
+			val mem = getLong(options, MEM, DEFAULT_MEM)
+			val memSigma = getLong(options, MEM_SIGMA, mem / DEFAULT_SIGMA_FACTOR)
+			if (memSigma <= 0) {
+				throw new ArgumentParserException("mem standard deviation must be > 0", parser)
+			}
         	return (master, failover, new TaskGenerator(tasks, duration, durationSigma, arrival, load, cpus, cpusSigma, mem, memSigma))
         }
         catch {
