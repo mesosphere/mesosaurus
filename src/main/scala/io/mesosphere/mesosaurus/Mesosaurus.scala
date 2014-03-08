@@ -23,7 +23,11 @@ object Mesosaurus extends Logging {
 	private val DEFAULT_FAILOVER_TIMEOUT = 2 * MINUTE
 	private val DEFAULT_NUMBER_OF_TASKS = 10
 	private val DEFAULT_TASK_DURATION = 1 * SECOND
-	private val DEFAULT_MEAN_ARRIVAL_TIME = SECOND / 10
+	private val DEFAULT_ARRIVAL_TIME = SECOND / 10
+	private val DEFAULT_LOAD = 0.5
+	private val DEFAULT_CPUS = 1
+	private val DEFAULT_MEM = 1
+	private val DEFAULT_SIGMA_FACTOR = 5
 
 	// A new command line parameter type for argparse4j that forces Int values to be positive
     private object UnsignedInteger extends ArgumentType[Int] {
@@ -31,7 +35,7 @@ object Mesosaurus extends Logging {
     		try {
             	val n: Int = Integer.parseInt(value)
             	if (n < 0) {
-                	throw new ArgumentParserException(String.format("%d must not be negative", Integer.valueOf(n)), parser)
+                	throw new ArgumentParserException(f"$n%d must not be negative", parser)
             	}
             	return n
         	} catch {
@@ -40,28 +44,50 @@ object Mesosaurus extends Logging {
     	}
     }
    
+	// A new command line parameter type for argparse4j that forces Double values to be positive
+    private object UnsignedDouble extends ArgumentType[Double] {
+    	override def convert(parser: ArgumentParser, argument :Argument, value :String): Double = {
+    		try {
+            	val n = java.lang.Double.parseDouble(toString)
+            	if (n < 0.0) {
+                	throw new ArgumentParserException(f"$n%f must not be negative", parser)
+            	}
+            	return n
+        	} catch {
+        		case e: NumberFormatException => throw new ArgumentParserException(e, parser)
+        	}
+    	}
+    }
+    
 	// Command line option names:
-    private val MASTER = "-master"
-    private val FAILOVER = "-failover"
-    private val TASKS = "-tasks"
-    private val DURATION = "-duration"
-    private val GENERATOR = "generator"    	
-    private val SIMPLE = "simple"
-    private val POISSON = "poisson"
-    private val ARRIVE = "-arrive"
+    private val MASTER = "master"
+    private val FAILOVER = "failover"
+    private val TASKS = "tasks"
+    private val DURATION = "duration"
+    private val DURATION_SIGMA = "duration_sigma"
+    private val ARRIVAL = "arrival"
+    private val LOAD = "load"
+    private val CPUS = "cpus"
+    private val CPUS_SIGMA = "cpus_sigma"
+    private val MEM = "mem"
+    private val MEM_SIGMA = "mem_sigma"
 
-    private def defineCommandLineOptions(parser: ArgumentParser): Unit = {
-    	parser.addArgument(MASTER).help("Mesos master IP:port")
-    	parser.addArgument(FAILOVER).`type`(UnsignedInteger).help("failover timeout ms")
-    	parser.addArgument(TASKS).`type`(UnsignedInteger).help("# tasks to launch")
-    	parser.addArgument(DURATION).`type`(UnsignedInteger).help("mean task duration ms")
+    private def addOption(parser: ArgumentParser, optionName :String): Argument = {
+    	return parser.addArgument("-" + optionName)
+    }	
     	
-    	val subparsers = parser.addSubparsers().dest(GENERATOR).title("subcommands").description("alternative task generators")
- 
-    	val simpleParser = subparsers.addParser(SIMPLE).help("simple task generator")
-
-    	val poissonParser = subparsers.addParser(POISSON).help("poisson task generator")
-    	poissonParser.addArgument(ARRIVE).`type`(UnsignedInteger).help("mean task arrival time in millisecond")
+    private def defineCommandLineOptions(parser: ArgumentParser): Unit = {
+    	addOption(parser, MASTER).help("Mesos master IP:port")
+    	addOption(parser, FAILOVER).`type`(UnsignedInteger).help("failover timeout in ms")
+    	addOption(parser, TASKS).`type`(UnsignedInteger).help("# tasks to launch")
+    	addOption(parser, DURATION).`type`(UnsignedInteger).help("mean task duration in ms")    	
+    	addOption(parser, DURATION_SIGMA).`type`(UnsignedInteger).help("task duration standard deviation in ms")
+    	addOption(parser, ARRIVAL).`type`(UnsignedInteger).help("mean task arrival time in ms")
+    	addOption(parser, LOAD).`type`(UnsignedDouble).help("load factor for every utilized CPU")
+    	addOption(parser, CPUS).`type`(UnsignedDouble).help("mean # of cpus")
+    	addOption(parser, CPUS_SIGMA).`type`(UnsignedDouble).help("cpus standard deviation")
+    	addOption(parser, MEM).`type`(UnsignedDouble).help("mean amount of memory in MB")
+    	addOption(parser, MEM_SIGMA).`type`(UnsignedDouble).help("memory standard deviation in MB")
     }
 
     // Because Scala cannot disambiguate the overloaded Java method 
@@ -71,10 +97,15 @@ object Mesosaurus extends Logging {
     
     private def getString(options :Namespace, name: String, defaultValue :String) :String = {
     	return if (options.get(name) != null) options.getString(name) else defaultValue
+    	
     }
     
     private def getInt(options :Namespace, name: String, defaultValue :Int) :Int = {
     	return if (options.get(name) != null) options.getInt(name).intValue() else defaultValue
+    }
+    
+    private def getDouble(options :Namespace, name: String, defaultValue :Double) :Double = {
+    	return if (options.get(name) != null) options.getDouble(name).doubleValue() else defaultValue
     }
     
     private def parseCommandLine(arguments: Array[String]): (String, Int, TaskGenerator) = {
@@ -88,15 +119,17 @@ object Mesosaurus extends Logging {
         	val failover = getInt(options, FAILOVER, DEFAULT_FAILOVER_TIMEOUT)
         	val tasks = getInt(options, TASKS, DEFAULT_NUMBER_OF_TASKS)
         	val duration = getInt(options, DURATION, DEFAULT_TASK_DURATION)
-        	options.getString(GENERATOR) match {
-        		case SIMPLE => 
-        			return (master, failover, new SimpleTaskGenerator(tasks, duration))
-        		case POISSON => 
-        			val meanArrival = getInt(options, ARRIVE, DEFAULT_MEAN_ARRIVAL_TIME)
-        			return (master, failover, new PoissonTaskGenerator(tasks, duration, meanArrival))
-        		case _ =>
-        			throw new ArgumentParserException("no task generator specified", parser)
-        	}
+			val arrival = getInt(options, ARRIVAL, DEFAULT_ARRIVAL_TIME)
+			val durationSigma = getInt(options, DURATION_SIGMA, duration / DEFAULT_SIGMA_FACTOR)
+			val load = getDouble(options, LOAD, DEFAULT_LOAD)
+			if (load < 0 || load > 1) {
+				throw new ArgumentParserException("load must be between 0.0 and 1.0", parser)
+			}
+			val cpus = getDouble(options, CPUS, DEFAULT_CPUS)
+			val cpusSigma = getDouble(options, CPUS_SIGMA, cpus / DEFAULT_SIGMA_FACTOR)
+			val mem = getDouble(options, MEM, DEFAULT_CPUS)
+			val memSigma = getDouble(options, MEM_SIGMA, mem / DEFAULT_SIGMA_FACTOR)
+        	return (master, failover, new TaskGenerator(tasks, duration, durationSigma, arrival, load, cpus, cpusSigma, mem, memSigma))
         }
         catch {
             case e: ArgumentParserException =>

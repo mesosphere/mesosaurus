@@ -13,7 +13,7 @@ class MesosaurusExecutor extends Executor with Logging {
     * data to it's executors through the ExecutorInfo.data
     * field.
     */
-  def registered(driver: ExecutorDriver, _executorInfo: ExecutorInfo, frameworkInfo: FrameworkInfo, slaveInfo: SlaveInfo): Unit = {
+  def registered(driver: ExecutorDriver, executorInfo: ExecutorInfo, frameworkInfo: FrameworkInfo, slaveInfo: SlaveInfo): Unit = {
     log.info("Executor.registered")
   }
 
