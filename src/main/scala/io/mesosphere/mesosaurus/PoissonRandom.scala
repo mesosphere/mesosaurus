@@ -10,7 +10,7 @@ import scala.util._
   *
   * We use the inversion transformation method to derive random values from the distribution:
   * http://en.wikipedia.org/wiki/Inverse_transform_sampling
-  * 
+  *
   * Poisson distribution formula, computing the probability that k random events happen during time t:
   *
   * 	Pk(t) = ((lambda * t)^k / k!) * e^(-lambda * t)
@@ -31,13 +31,13 @@ import scala.util._
   *  t = -ln(1 - p) * mean
   */
 class PoissonRandom(mean: Double) {
-	private val _epsilon = 0.001
+    private val _epsilon = 0.001
     private val _seed = mean.toLong ^ System.currentTimeMillis;
     private val _random = new Random(_seed);
 
     /**
-     * @return a random value with this distribution
-     */
+      * @return a random value with this distribution
+      */
     def next(): Double = {
         var p = 0.0
         do {

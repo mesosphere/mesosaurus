@@ -6,55 +6,55 @@ import org.apache.mesos.Protos._
   * Generates tasks with poisson-distributed arrival time.
   */
 class TaskGenerator(requestedTasks: Int,
-					taskDurationMean :Int,
-					taskDurationSigma :Int,
-					arrivalTimeMean: Int,
-					load :Double,
-					cpusMean :Double,
-					cpusSigma :Double,
-					memMean :Long,
-					memSigma: Long,
-					offerAttempts: Int = 100) extends Logging {
+        taskDurationMean: Int,
+        taskDurationSigma: Int,
+        arrivalTimeMean: Int,
+        load: Double,
+        cpusMean: Double,
+        cpusSigma: Double,
+        memMean: Long,
+        memSigma: Long,
+        offerAttempts: Int = 100) extends Logging {
 
     private var _createdTasks = 0
     private var _forfeitedTasks = 0
 
-	/**
-	 * Whether any more tasks will be created.
-	 * This is supposed to be queried by the scheduler to determine when to decline all offers.
-	 */
+    /**
+      * Whether any more tasks will be created.
+      * This is supposed to be queried by the scheduler to determine when to decline all offers.
+      */
     def doneCreatingTasks(): Boolean = {
         return _createdTasks + _forfeitedTasks >= requestedTasks
     }
 
-	private var _terminatedTasks = 0
+    private var _terminatedTasks = 0
 
-	/**
-	 * Whether all existing tasks are done executing or to be finished immediately
-	 * and no more tasks are to be scheduled.
-	 * This is supposed to be queried by the scheduler to determine
-	 * when to stop the scheduler and thus terminate the whole framework.
-	 */
-	def done(): Boolean = {
-		return _terminatedTasks >= requestedTasks && doneCreatingTasks()
-	}
+    /**
+      * Whether all existing tasks are done executing or to be finished immediately
+      * and no more tasks are to be scheduled.
+      * This is supposed to be queried by the scheduler to determine
+      * when to stop the scheduler and thus terminate the whole framework.
+      */
+    def done(): Boolean = {
+        return _terminatedTasks >= requestedTasks && doneCreatingTasks()
+    }
 
-	def observeTaskStatusUpdate(taskStatus: TaskStatus) = {
-		taskStatus.getState() match {
-			case TaskState.TASK_FAILED |
-				TaskState.TASK_KILLED |
-				TaskState.TASK_LOST => {
-				log.info("task failed: " + taskStatus)
-				_terminatedTasks += 1;
-			}
-			case TaskState.TASK_FINISHED => {
-				_terminatedTasks += 1;
-			}
-			case TaskState.TASK_STAGING |
-				TaskState.TASK_STARTING |
-				TaskState.TASK_RUNNING =>
-		}
-	}
+    def observeTaskStatusUpdate(taskStatus: TaskStatus) = {
+        taskStatus.getState() match {
+            case TaskState.TASK_FAILED |
+                TaskState.TASK_KILLED |
+                TaskState.TASK_LOST => {
+                log.info("task failed: " + taskStatus)
+                _terminatedTasks += 1;
+            }
+            case TaskState.TASK_FINISHED => {
+                _terminatedTasks += 1;
+            }
+            case TaskState.TASK_STAGING |
+                TaskState.TASK_STARTING |
+                TaskState.TASK_RUNNING =>
+        }
+    }
 
     val TASK_COMMAND = "/tmp/mesosaurus-task"
 
@@ -84,10 +84,10 @@ class TaskGenerator(requestedTasks: Int,
         var offerAttempts = 0
 
         def commandArguments(): String = {
-        	val cores = math.ceil(resources.cpus).toInt
-        	return duration + " " + cores  + " " + load + " " + resources.mem
+            val cores = math.ceil(resources.cpus).toInt
+            return duration + " " + cores + " " + load + " " + resources.mem
         }
-        
+
         def print(): Unit = {
             log.info("arrival: " + arrivalTime +
                 ", duration: " + duration +
