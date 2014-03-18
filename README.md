@@ -50,20 +50,35 @@ performance analysis.
     git clone https://github.com/mesosphere/mesosaurus.git
     </pre></code>
 
-2. Download and install libraries that Mesosaurus depends on and 
+2. Build the task executor, which is written in C++ and 
+   install its binary where Mesosaurus can find it later on.
+    <pre><code>
+    cd mesosaurus/task
+    make
+    </pre></code>
+
+3. Manually copy the task executor to the */tmp* directory 
+   on every slave machine in your Mesos cluster.
+   On your local machine, this would be:
+    <pre><code>
+    cp mesosaurus-task /tmp/
+    cd ..
+    </pre></code>
+   This is only a temporary solution until we have a better one.
+
+4. Download and install libraries that Mesosaurus depends on and 
    translate the Scala source code to bytecode:
     <pre><code>
-    cd mesosaurus
     sbt compile
     </code></pre>
 
-3. If you have a Mesos master running on your local machine 
+5. If you have a Mesos master running on your local machine 
    you can simply execute Mesosaurus with default values for all settings:
     <pre><code>
     sbt run
     </code></pre>
 
-4. As a more complex example, you can run 10 tasks 
+6. As a more complex example, you can run 10 tasks 
    that take on average 1 second 
    and arrive on average every 2 seconds
    on a Mesos installation with its master at a specified IP address and port:
@@ -94,7 +109,7 @@ of its available command line options:
 ## Coding Conventions
 We try to follow the usual 
 [Scala Style Guide](http://docs.scala-lang.org/style/), 
-but we insist in two things:
+but we insist on two things:
 1. No TAB character is allowed anywhere in source code.
 2. Indentation must be 4 spaces, not 2.
 

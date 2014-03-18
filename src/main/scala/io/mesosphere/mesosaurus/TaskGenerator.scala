@@ -3,7 +3,8 @@ package io.mesosphere.mesosaurus
 import org.apache.mesos.Protos._
 
 /**
-  * Generates tasks with poisson-distributed arrival time.
+  * Generates descriptions of tasks with a variety of configurable properties 
+  * like average arrival time, duration, resource consumption.
   */
 class TaskGenerator(requestedTasks: Int,
         taskDurationMean: Int,

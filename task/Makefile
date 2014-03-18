@@ -1,4 +1,4 @@
-all: helper
+all: mesosaurus-task
 
-helper: mesosaurus-task.cpp
+mesosaurus-task: mesosaurus-task.cpp
 	$(CXX) $(CFLAGS) mesosaurus-task.cpp -o mesosaurus-task
