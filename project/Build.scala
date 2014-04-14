@@ -55,7 +55,8 @@ object MesosaurusBuild extends Build {
       "ch.qos.logback"   % "logback-classic" % "1.0.9"   % "runtime",
       "net.sourceforge.argparse4j" 	 % "argparse4j" 	 % "0.4.3",
       "junit" 			 % "junit" 			 % "4.11" 	 % "test",
-      "org.scalatest"   %% "scalatest"       % "2.0.M5b" % "test"
+      "org.scalatest"   %% "scalatest"       % "2.0.M5b" % "test",
+      "org.gnieh" %% "tiscaf" % "0.8"
     ),
 
     scalacOptions in Compile ++= Seq(

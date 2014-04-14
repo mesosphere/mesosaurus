@@ -16,17 +16,14 @@ const int work_loop = 100000;
 void usage(char **argv) {
   fprintf(stderr,
       "Usage: %s <duration (ms)> <number of cores> <average load (0.0 - 1.0)>"
-      " <average memory (megabytes)>\n", argv[0]);
-  exit(EXIT_FAILURE);
+          " <average memory (megabytes)>\n", argv[0]);
+  exit (EXIT_FAILURE);
 }
 
 struct work {
-  work(int id, pthread_t* thread, float load, long mem, int duration)
-    : id(id),
-      thread(thread),
-      load(load),
-      mem(mem),
-      duration(duration) {}
+  work(int id, pthread_t* thread, float load, long mem, int duration) :
+      id(id), thread(thread), load(load), mem(mem), duration(duration) {
+  }
 
   int id;
   pthread_t* thread;
@@ -43,7 +40,7 @@ long us_timestamp() {
 
 void* workerEntry(void* payload) {
   assert(payload != 0);
-  work* current_workload = (work*)payload;
+  work* current_workload = (work*) payload;
 
   // Prevent the compiler from optimizing our artificial workload.
   volatile double val = 1.5;
@@ -60,10 +57,8 @@ void* workerEntry(void* payload) {
   int chunkSize = 1024;
   int estimatedIterations = 1;
 
-  printf(
-    "Worker %d: allocate %d bytes over work iterations\n",
-    current_workload->id,
-    bytesToAllocate);
+  printf("Worker %d: allocate %d bytes over work iterations\n",
+      current_workload->id, bytesToAllocate);
 
   for (int iteration = 0; us_timestamp() < endTime; iteration++) {
     long start = us_timestamp();
@@ -82,8 +77,8 @@ void* workerEntry(void* payload) {
     }
 
     long elapsed = us_timestamp() - start;
-    long stale =
-      ((elapsed / current_workload->load) * (1 - current_workload->load));
+    long stale = ((elapsed / current_workload->load)
+        * (1 - current_workload->load));
     usleep(stale);
 
     // Adjust estimated iterations left and chunk size.
@@ -122,8 +117,7 @@ int main(int argc, char** argv) {
   }
 
   if ((load < 0) || (load > 1)) {
-    fprintf(stderr,
-        "Error: Load must be a floating point number"
+    fprintf(stderr, "Error: Load must be a floating point number"
         " between 0 and 1.\n");
     usage(argv);
   }
@@ -142,47 +136,36 @@ int main(int argc, char** argv) {
   for (int workerId = 0; workerId < cores; workerId++) {
     pthread_t* thread = new pthread_t();
     threads.push_back(thread);
-    work* current_workload = new work(
-        workerId,
-        thread,
-        load,
-        mem / cores,
+    work* current_workload = new work(workerId, thread, load, mem / cores,
         duration);
 
-    int status = pthread_create(
-        thread,
-        NULL,
-        workerEntry,
-        (void*)current_workload);
+    int status = pthread_create(thread, NULL, workerEntry,
+        (void*) current_workload);
     if (status) {
-      fprintf(
-          stderr,
-          "Could not create worker thread %d: return code %d\n",
-          workerId,
-          status);
-      exit(EXIT_FAILURE);
+      fprintf(stderr, "Could not create worker thread %d: return code %d\n",
+          workerId, status);
+      exit (EXIT_FAILURE);
     }
 
   }
 
   // Join threads.
-  for (vector<pthread_t*>::iterator it = threads.begin();
-       it != threads.end();
-       it++) {
+  for (vector<pthread_t*>::iterator it = threads.begin(); it != threads.end();
+      it++) {
     pthread_t* thread = *it;
     int thread_status;
     int status;
 
-    status = pthread_join(*thread, (void**)&status);
+    status = pthread_join(*thread, (void**) &status);
     if (status) {
       fprintf(stderr, "Could not join thread: return code %d\n", status);
-      exit(EXIT_FAILURE);
+      exit (EXIT_FAILURE);
     }
 
     delete thread;
   }
 
-  pthread_exit(NULL);
+  pthread_exit (NULL);
 
   return EXIT_SUCCESS;
 }

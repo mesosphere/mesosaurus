@@ -3,7 +3,7 @@ package io.mesosphere.mesosaurus
 import org.apache.mesos.Protos._
 
 /**
-  * Generates descriptions of tasks with a variety of configurable properties 
+  * Generates descriptions of tasks with a variety of configurable properties
   * like average arrival time, duration, resource consumption.
   */
 class TaskGenerator(requestedTasks: Int,
@@ -57,14 +57,17 @@ class TaskGenerator(requestedTasks: Int,
         }
     }
 
-    val TASK_COMMAND = "/tmp/mesosaurus-task"
+    val TASK_PROGRAM = "mesosaurus-task"
 
     private def createTaskInfo(slaveID: SlaveID, taskDescriptor: TaskDescriptor): TaskInfo = {
         val taskID = TaskID.newBuilder()
             .setValue(Integer.toString(_createdTasks))
             .build()
         System.out.println("Launching task " + taskID.getValue())
-        val commandInfo = CommandInfo.newBuilder().setValue(TASK_COMMAND + " " + taskDescriptor.commandArguments())
+        val uri = CommandInfo.URI.newBuilder().setValue(WebServer.url() + "/" + TASK_PROGRAM).setExecutable(true)
+        val commandInfo = CommandInfo.newBuilder()
+            .setValue("./" + TASK_PROGRAM + " " + taskDescriptor.commandArguments())
+            .addUris(uri)
         return TaskInfo.newBuilder()
             .setName("task " + taskID.getValue())
             .setTaskId(taskID)

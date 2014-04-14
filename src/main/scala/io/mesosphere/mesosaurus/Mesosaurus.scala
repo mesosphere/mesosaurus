@@ -51,7 +51,7 @@ object Mesosaurus extends Logging {
         }
     }
 
-    // A new command line parameter type for argparse4j that forces Int values to be positive
+    // A new command line parameter type for argparse4j that forces Long values to be positive
     private object UnsignedLong extends ArgumentType[Long] {
         override def convert(parser: ArgumentParser, argument: Argument, value: String): Long = {
             try {
@@ -191,9 +191,11 @@ object Mesosaurus extends Logging {
             .build
         val schedulerDriver = new MesosSchedulerDriver(scheduler, frameworkInfo, mesosMaster)
 
+        WebServer.start
         val driverStatus = schedulerDriver.run()
         val exitStatus = if (driverStatus == Status.DRIVER_STOPPED) 0 else 1
         schedulerDriver.stop()
+        WebServer.stop
         System.exit(exitStatus)
     }
 }
