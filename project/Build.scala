@@ -49,14 +49,14 @@ object MesosaurusBuild extends Build {
     scalaVersion := SCALA_VERSION,
 
     libraryDependencies ++= Seq(
-      "org.apache.mesos" % "mesos"           % "0.15.0",
-      "com.typesafe"     % "config"          % "1.0.2",
-      "org.slf4j"        % "slf4j-api"       % "1.7.2",
-      "ch.qos.logback"   % "logback-classic" % "1.0.9"   % "runtime",
-      "net.sourceforge.argparse4j" 	 % "argparse4j" 	 % "0.4.3",
-      "junit" 			 % "junit" 			 % "4.11" 	 % "test",
-      "org.scalatest"   %% "scalatest"       % "2.0.M5b" % "test",
-      "org.gnieh" %% "tiscaf" % "0.8"
+      "org.apache.mesos"             % "mesos"           % "0.15.0",
+      "com.typesafe"                 % "config"          % "1.0.2",
+      "org.slf4j"                    % "slf4j-api"       % "1.7.2",
+      "ch.qos.logback"               % "logback-classic" % "1.0.9"   % "runtime",
+      "net.sourceforge.argparse4j" 	 % "argparse4j" 	   % "0.4.3",
+      "junit" 			                 % "junit" 			     % "4.11" 	 % "test",
+      "org.scalatest"               %% "scalatest"       % "2.0.M5b" % "test",
+      "org.gnieh"                   %% "tiscaf"          % "0.8"
     ),
 
     scalacOptions in Compile ++= Seq(
@@ -80,8 +80,8 @@ object MesosaurusBuild extends Build {
   lazy val formatSettings = scalariformSettings ++ Seq(
     ScalariformKeys.preferences := FormattingPreferences()
       .setPreference(IndentWithTabs, false)
-      .setPreference(IndentSpaces, 4)
-      .setPreference(AlignParameters, false)
+      .setPreference(IndentSpaces, 2)
+      .setPreference(AlignParameters, true)
       .setPreference(DoubleIndentClassDeclaration, true)
       .setPreference(MultilineScaladocCommentsStartOnFirstLine, false)
       .setPreference(PlaceScaladocAsterisksBeneathSecondAsterisk, true)
@@ -94,6 +94,7 @@ object MesosaurusBuild extends Build {
       .setPreference(SpaceInsideParentheses, false)
       .setPreference(SpacesWithinPatternBinders, true)
       .setPreference(FormatXml, true)
-  )
+    )
+
 
 }
