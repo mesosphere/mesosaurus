@@ -67,7 +67,7 @@ class TaskGenerator(
 
   private def createTaskInfo(slaveID: SlaveID, taskDescriptor: TaskDescriptor): TaskInfo = {
     val taskID = TaskID.newBuilder()
-      .setValue(Integer.toString(_createdTasks))
+      .setValue(Integer.toString(taskDescriptor.id))
       .build()
     System.out.println("Launching task " + taskID.getValue())
 
@@ -100,6 +100,7 @@ class TaskGenerator(
   }
 
   private case class TaskDescriptor(
+      id: Int,
       arrivalTime: Int,
       duration: Int,
       resources: Resources) extends Logging {
@@ -130,13 +131,14 @@ class TaskGenerator(
 
     var arrivalTime = 0
 
-    for (i <- 0 until requestedTasks) {
+    for (id <- 0 until requestedTasks) {
       arrivalTime += arrivalTimeRandom.next().toInt
       val duration = durationRandom.next().toInt
       val cpus = cpusRandom.next()
       val mem = memRandom.next().toLong
       val resources = new Resources(cpus, mem)
-      queue += TaskDescriptor(arrivalTime, duration, resources)
+      queue += TaskDescriptor(id, arrivalTime, duration, resources)
+      TaskTracker.arrived(s"$id", Timestamp.now)
     }
 
     queue
