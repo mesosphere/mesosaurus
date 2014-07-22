@@ -166,6 +166,7 @@ class TaskGenerator(
     // Remove tasks that have exceeded the number of offer attempts
     val (forfeited, retained) =
       _taskDescriptors.partition(_.offerAttempts > offerAttempts)
+
     log.info(s"Forfeiting [${forfeited.size} tasks]")
     _taskDescriptors = mutable.Queue(retained: _*)
     _forfeitedTasks += forfeited.size
@@ -175,18 +176,21 @@ class TaskGenerator(
     log.info("Queued tasks: [%s]" format _taskDescriptors.map(_.id).mkString(", "))
 
     val (scheduled, notScheduled) =
-      _taskDescriptors.map { td =>
-        if (td.arrivalTime <= elapsedTime) {
-          td.offerAttempts += 1
-          if (td.resources <= offerResources) {
+      _taskDescriptors.partition { td =>
+        val arrived = td.arrivalTime <= elapsedTime
+        val matchesOffer = td.resources <= offerResources
+        (arrived, matchesOffer) match {
+          case (true, false) =>
+            td.offerAttempts += 1
+            false
+          case (true, true) =>
+            td.offerAttempts += 1
             taskInfos += createTaskInfo(offer.getSlaveId, td)
             offerResources = offerResources - td.resources
             _createdTasks += 1
-          }
+            true
+          case _ => false
         }
-        td
-      }.partition { td =>
-        td.arrivalTime <= elapsedTime && td.resources <= offerResources
       }
 
     log.info("Scheduled tasks: [%s]" format scheduled.map(_.id).mkString(", "))
