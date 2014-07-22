@@ -79,7 +79,8 @@ class TaskGenerator(
     }
 
     val commandInfo = CommandInfo.newBuilder()
-      .setValue("./" + TASK_PROGRAM + " " + taskDescriptor.commandArguments())
+      // .setValue("./" + TASK_PROGRAM + " " + taskDescriptor.commandArguments())
+      .setValue("sleep " + taskDescriptor.duration / 1000)
       .addAllUris(uris.asJava)
 
     return TaskInfo.newBuilder()
@@ -141,7 +142,7 @@ class TaskGenerator(
     queue
   }
 
-  private var _startTime = System.currentTimeMillis
+  private val _startTime = System.currentTimeMillis
 
   def start() = {
     _startTime = System.currentTimeMillis

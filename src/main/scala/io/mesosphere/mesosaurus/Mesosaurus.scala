@@ -28,7 +28,7 @@ object Mesosaurus extends Logging {
 
   // Default configuration values:
   private val DEFAULT_MESOS_MASTER = "localhost:5050"
-  private val DEFAULT_FAILOVER_TIMEOUT = 2 * MINUTE
+  private val DEFAULT_FAILOVER_TIMEOUT = 0
   private val DEFAULT_NUMBER_OF_TASKS = 10
   private val DEFAULT_TASK_DURATION = 1 * SECOND
   private val DEFAULT_TASK_ARRIVAL_TIME = SECOND / 10
