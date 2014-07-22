@@ -54,6 +54,7 @@ class MesosaurusScheduler(private val _taskGenerator: TaskGenerator)
 
   def statusUpdate(driver: SchedulerDriver, taskStatus: TaskStatus): Unit = {
     log.info("Scheduler.statusUpdate")
+    TaskTracker.queueLength(_taskGenerator.numPendingTasks, Timestamp.now)
     _taskGenerator.observeTaskStatusUpdate(taskStatus);
     if (_taskGenerator.done()) {
       driver.stop();

@@ -206,7 +206,7 @@ object Mesosaurus extends Logging {
     val makespanFw = new FileWriter(outDir + "makespan.dat")
 
     // write dat file for task arrival
-    taskTracker.history.foreach {
+    taskTracker.taskHistory.foreach {
       case (id, taskHistory) =>
         val relativeArrival = taskHistory.arrived.millis - startTime.millis
         arrivedFw.write(s"7000 $relativeArrival\n")

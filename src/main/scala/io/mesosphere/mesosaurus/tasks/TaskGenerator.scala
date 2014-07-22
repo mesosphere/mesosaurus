@@ -150,13 +150,18 @@ class TaskGenerator(
     queue
   }
 
+  def numPendingTasks(): Int = {
+    val elapsedTime = Timestamp.now.millis - startTime
+    _taskDescriptors.count { _.arrivalTime <= elapsedTime }
+  }
+
   /**
     * NB: This method removes tasks that have exceeded the maximum number of
     * offer attempts from the queue of task queue as a side effect!
     */
   def generateTaskInfos(offer: Offer): java.util.Collection[TaskInfo] = {
     var offerResources = new Resources(offer)
-    val currentRunTime = System.currentTimeMillis - startTime
+    val elapsedTime = Timestamp.now.millis - startTime
 
     // Remove tasks that have exceeded the number of offer attempts
     val (forfeited, retained) =
@@ -171,7 +176,7 @@ class TaskGenerator(
 
     val (scheduled, notScheduled) =
       _taskDescriptors.map { td =>
-        if (td.arrivalTime <= currentRunTime) {
+        if (td.arrivalTime <= elapsedTime) {
           td.offerAttempts += 1
           if (td.resources <= offerResources) {
             taskInfos += createTaskInfo(offer.getSlaveId, td)
@@ -181,7 +186,7 @@ class TaskGenerator(
         }
         td
       }.partition { td =>
-        td.arrivalTime <= currentRunTime && td.resources <= offerResources
+        td.arrivalTime <= elapsedTime && td.resources <= offerResources
       }
 
     log.info("Scheduled tasks: [%s]" format scheduled.map(_.id).mkString(", "))

@@ -1,10 +1,18 @@
 package io.mesosphere.mesosaurus.tasks
 
 import io.mesosphere.mesosaurus.Timestamp
+import scala.collection.immutable.SortedSet
 
 trait TaskTracker {
 
   private[this] var history = Map[String, TaskHistory]()
+
+  case class Sample[T](value: T, timestamp: Timestamp)
+
+  implicit val _: Ordering[Sample[Int]] =
+    Ordering.by { (s: Sample[Int]) => s.timestamp }
+
+  private[this] var queueSamples = SortedSet[Sample[Int]]()
 
   def arrived(taskId: String, ts: Timestamp): Unit =
     history = history + (taskId -> TaskHistory(ts))
@@ -27,10 +35,15 @@ trait TaskTracker {
       history = history + entry
     }
 
-  def history(taskId: String): Option[TaskHistory] =
+  def queueLength(length: Int, ts: Timestamp): Unit =
+    queueSamples = queueSamples + Sample(length, ts)
+
+  def queueHistory(): SortedSet[Sample[Int]] = queueSamples
+
+  def taskHistory(taskId: String): Option[TaskHistory] =
     history.get(taskId)
 
-  def history(): Map[String, TaskHistory] = history
+  def taskHistory(): Map[String, TaskHistory] = history
 
 }
 
