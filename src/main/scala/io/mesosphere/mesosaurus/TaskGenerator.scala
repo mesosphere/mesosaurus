@@ -1,21 +1,25 @@
 package io.mesosphere.mesosaurus
 
 import org.apache.mesos.Protos._
+import scala.collection.JavaConverters._
+import java.net.URI
 
 /**
   * Generates descriptions of tasks with a variety of configurable properties
   * like average arrival time, duration, resource consumption.
   */
-class TaskGenerator(requestedTasks: Int,
-                    taskDurationMean: Int,
-                    taskDurationSigma: Int,
-                    arrivalTimeMean: Int,
-                    load: Double,
-                    cpusMean: Double,
-                    cpusSigma: Double,
-                    memMean: Long,
-                    memSigma: Long,
-                    offerAttempts: Int = 100) extends Logging {
+class TaskGenerator(
+    artifacts: Seq[URI],
+    requestedTasks: Int,
+    taskDurationMean: Int,
+    taskDurationSigma: Int,
+    arrivalTimeMean: Int,
+    load: Double,
+    cpusMean: Double,
+    cpusSigma: Double,
+    memMean: Long,
+    memSigma: Long,
+    offerAttempts: Int = 100) extends Logging {
 
   private var _createdTasks = 0
   private var _forfeitedTasks = 0
@@ -64,11 +68,18 @@ class TaskGenerator(requestedTasks: Int,
       .setValue(Integer.toString(_createdTasks))
       .build()
     System.out.println("Launching task " + taskID.getValue())
-    // val uri = CommandInfo.URI.newBuilder().setValue(WebServer.url() + "/" + TASK_PROGRAM).setExecutable(true)
-    val uri = CommandInfo.URI.newBuilder().setValue("/" + TASK_PROGRAM).setExecutable(true)
+
+    val uris: Seq[CommandInfo.URI] = artifacts.map { artifact =>
+      CommandInfo.URI.newBuilder
+        .setValue(artifact.toString)
+        .setExecutable(true)
+        .build
+    }
+
     val commandInfo = CommandInfo.newBuilder()
       .setValue("./" + TASK_PROGRAM + " " + taskDescriptor.commandArguments())
-      .addUris(uri)
+      .addAllUris(uris.asJava)
+
     return TaskInfo.newBuilder()
       .setName("task " + taskID.getValue())
       .setTaskId(taskID)

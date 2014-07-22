@@ -6,6 +6,7 @@ import net.sourceforge.argparse4j.impl._
 import net.sourceforge.argparse4j.inf._
 import org.apache.mesos._
 import org.apache.mesos.Protos._
+import java.net.URI
 
 /**
   * Mesos benchmarking framework
@@ -166,7 +167,23 @@ object Mesosaurus extends Logging {
       if (memSigma <= 0) {
         throw new ArgumentParserException("mem standard deviation must be > 0", parser)
       }
-      return (master, failover, new TaskGenerator(tasks, duration, durationSigma, arrival, load, cpus, cpusSigma, mem, memSigma))
+
+      val artifacts: Seq[URI] = Nil // TODO: add URI for the task program
+
+      val taskGenerator = new TaskGenerator(
+        artifacts,
+        tasks,
+        duration,
+        durationSigma,
+        arrival,
+        load,
+        cpus,
+        cpusSigma,
+        mem,
+        memSigma
+      )
+
+      return (master, failover, taskGenerator)
     }
     catch {
       case e: ArgumentParserException =>
