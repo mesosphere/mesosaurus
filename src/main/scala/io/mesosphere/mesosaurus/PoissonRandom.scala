@@ -31,21 +31,21 @@ import scala.util._
   *  t = -ln(1 - p) * mean
   */
 class PoissonRandom(mean: Double) {
-    private val _epsilon = 0.001
-    private val _seed = mean.toLong ^ System.currentTimeMillis;
-    private val _random = new Random(_seed);
+  private val _epsilon = 0.001
+  private val _seed = mean.toLong ^ System.currentTimeMillis;
+  private val _random = new Random(_seed);
 
-    /**
-      * @return a random value with this distribution
-      */
-    def next(): Double = {
-        var p = 0.0
-        do {
-            p = _random.nextDouble() // in range [0.0|1.0]
-        } while (p > 1 - _epsilon) // prevent extremely large and infinite end results caused by p close to 1.0
+  /**
+    * @return a random value with this distribution
+    */
+  def next(): Double = {
+    var p = 0.0
+    do {
+      p = _random.nextDouble() // in range [0.0|1.0]
+    } while (p > 1 - _epsilon) // prevent extremely large and infinite end results caused by p close to 1.0
 
-        val result = -math.log(1.0 - p) * mean;
-        return result * 1.007 // compensate the actual mean for the truncated high end
-    }
+    val result = -math.log(1.0 - p) * mean;
+    return result * 1.007 // compensate the actual mean for the truncated high end
+  }
 
 }
