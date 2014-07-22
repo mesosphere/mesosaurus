@@ -137,7 +137,9 @@ class TaskGenerator(
       val cpus = cpusRandom.next()
       val mem = memRandom.next().toLong
       val resources = new Resources(cpus, mem)
-      queue += TaskDescriptor(id, arrivalTime, duration, resources)
+      val td = TaskDescriptor(id, arrivalTime, duration, resources)
+      queue += td
+      log.info(s"Created [$td]")
       TaskTracker.arrived(s"$id", Timestamp(startTime + arrivalTime))
     }
 
@@ -163,8 +165,10 @@ class TaskGenerator(
 
     val taskInfos = mutable.Buffer[TaskInfo]()
 
+    log.info("Queued tasks: [%s]" format _taskDescriptors.map(_.id).mkString(", "))
+
     val (scheduled, notScheduled) =
-      _taskDescriptors.view.map { td =>
+      _taskDescriptors.map { td =>
         if (td.arrivalTime <= currentRunTime) {
           td.offerAttempts += 1
           if (td.resources <= offerResources) {
@@ -177,6 +181,9 @@ class TaskGenerator(
       }.partition { td =>
         td.arrivalTime <= currentRunTime && td.resources <= offerResources
       }
+
+    log.info("Scheduled tasks: [%s]" format scheduled.map(_.id).mkString(", "))
+    log.info("Unscheduled tasks: [%s]" format notScheduled.map(_.id).mkString(", "))
 
     _taskDescriptors = mutable.Queue(notScheduled: _*)
     taskInfos.asJava
