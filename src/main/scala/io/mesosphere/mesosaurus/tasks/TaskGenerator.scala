@@ -56,10 +56,12 @@ class TaskGenerator(
       }
       case TaskState.TASK_FINISHED => {
         _terminatedTasks += 1;
+        TaskTracker.finished(taskStatus.getTaskId.getValue, Timestamp.now)
       }
       case TaskState.TASK_STAGING |
         TaskState.TASK_STARTING |
         TaskState.TASK_RUNNING =>
+        TaskTracker.started(taskStatus.getTaskId.getValue, Timestamp.now)
     }
   }
 
@@ -121,6 +123,8 @@ class TaskGenerator(
 
   }
 
+  val startTime = System.currentTimeMillis
+
   private var _taskDescriptors: mutable.Queue[TaskDescriptor] = {
     val arrivalTimeRandom = new PoissonRandom(arrivalTimeMean)
     val durationRandom = new GaussRandom(taskDurationMean, taskDurationSigma)
@@ -145,8 +149,6 @@ class TaskGenerator(
 
     queue
   }
-
-  val startTime = System.currentTimeMillis
 
   /**
     * NB: This method removes tasks that have exceeded the maximum number of

@@ -195,18 +195,45 @@ object Mesosaurus extends Logging {
     return null
   }
 
-  def writePlot(startTime: Timestamp, taskTracker: TaskTracker, outFile: File) {
+  def writePlot(startTime: Timestamp, taskTracker: TaskTracker, outDir: String) {
 
-    val fw = new FileWriter(outFile)
+    val arrivedFw = new FileWriter(outDir + "arrived.dat")
+    val launchedFw = new FileWriter(outDir + "launched.dat")
+    val startedFw = new FileWriter(outDir + "started.dat")
+    val finishedFw = new FileWriter(outDir + "finished.dat")
+
+    val waitTimeFw = new FileWriter(outDir + "waittime.dat")
+    val makespanFw = new FileWriter(outDir + "makespan.dat")
 
     // write dat file for task arrival
     taskTracker.history.foreach {
       case (id, taskHistory) =>
         val relativeArrival = taskHistory.arrived.millis - startTime.millis
-        fw.write(s"7000 $relativeArrival\n")
+        arrivedFw.write(s"7000 $relativeArrival\n")
+
+        val relativeLaunched = taskHistory.launched.get.millis - startTime.millis
+        launchedFw.write(s"6000 $relativeLaunched\n")
+
+        val relativeStarted = taskHistory.started.get.millis - startTime.millis
+        startedFw.write(s"5000 $relativeStarted\n")
+
+        val relativeFinished = taskHistory.finished.get.millis - startTime.millis
+        finishedFw.write(s"4000 $relativeFinished\n")
+
+        val waitTime = relativeLaunched - relativeArrival
+        waitTimeFw.write(s"$relativeLaunched $waitTime\n")
+
+        val makespan = relativeFinished - relativeArrival
+        makespanFw.write(s"$relativeFinished $makespan\n")
     }
 
-    fw.close
+    arrivedFw.close
+    launchedFw.close
+    startedFw.close
+    finishedFw.close
+
+    waitTimeFw.close
+    makespanFw.close
   }
 
   def main(arguments: Array[String]): Unit = {
@@ -231,7 +258,7 @@ object Mesosaurus extends Logging {
     writePlot(
       Timestamp(taskGenerator.startTime),
       TaskTracker,
-      new File("results/arrival.dat")
+      "results/"
     )
 
     schedulerDriver.stop()
