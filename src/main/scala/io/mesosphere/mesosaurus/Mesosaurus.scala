@@ -1,5 +1,6 @@
 package io.mesosphere.mesosaurus
 
+import io.mesosphere.mesosaurus.tasks.TaskGenerator
 import com.typesafe.config._
 import net.sourceforge.argparse4j._
 import net.sourceforge.argparse4j.impl._

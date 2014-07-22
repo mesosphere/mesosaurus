@@ -1,7 +1,9 @@
-package io.mesosphere.mesosaurus
+package io.mesosphere.mesosaurus.tasks
 
+import io.mesosphere.mesosaurus._
 import org.apache.mesos.Protos._
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 import java.net.URI
 
 /**
@@ -96,43 +98,48 @@ class TaskGenerator(
       .build()
   }
 
-  private class TaskDescriptor(val arrivalTime: Int, val duration: Int, val resources: Resources) extends Logging {
+  private case class TaskDescriptor(
+      arrivalTime: Int,
+      duration: Int,
+      resources: Resources) extends Logging {
+
     var offerAttempts = 0
 
     def commandArguments(): String = {
       val cores = math.ceil(resources.cpus).toInt
-      return duration + " " + cores + " " + load + " " + resources.mem
+      s"$duration $cores $load ${resources.mem}"
     }
 
-    def print(): Unit = {
-      log.info("arrival: " + arrivalTime +
+    def print(): Unit = log.info(
+      "arrival: " + arrivalTime +
         ", duration: " + duration +
         ", cpus : " + resources.cpus +
-        ", mem: " + resources.mem)
-    }
+        ", mem: " + resources.mem
+    )
+
   }
 
-  private val _taskDescriptors = new Ring[TaskDescriptor](null)
-
-  private def prepareTasks() = {
+  private var _taskDescriptors: mutable.Queue[TaskDescriptor] = {
     val arrivalTimeRandom = new PoissonRandom(arrivalTimeMean)
     val durationRandom = new GaussRandom(taskDurationMean, taskDurationSigma)
     val cpusRandom = new GaussRandom(cpusMean, cpusSigma)
     val memRandom = new GaussRandom(memMean.toDouble, memSigma.toDouble)
 
+    val queue = mutable.Queue[TaskDescriptor]()
+
     var arrivalTime = 0
+
     for (i <- 0 until requestedTasks) {
       arrivalTime += arrivalTimeRandom.next().toInt
       val duration = durationRandom.next().toInt
       val cpus = cpusRandom.next()
       val mem = memRandom.next().toLong
       val resources = new Resources(cpus, mem)
-      val taskDescriptor = new TaskDescriptor(arrivalTime, duration, resources)
-      _taskDescriptors.add(taskDescriptor)
+      queue += TaskDescriptor(arrivalTime, duration, resources)
     }
-  }
 
-  prepareTasks()
+    queue
+  }
 
   private var _startTime = System.currentTimeMillis
 
@@ -140,29 +147,33 @@ class TaskGenerator(
     _startTime = System.currentTimeMillis
   }
 
+  /**
+    * NB: This method removes tasks that have exceeded the maximum number of
+    * offer attempts from the queue of task queue as a side effect!
+    */
   def generateTaskInfos(offer: Offer): java.util.Collection[TaskInfo] = {
     var offerResources = new Resources(offer)
-    val taskInfos = new java.util.ArrayList[TaskInfo]()
     val currentRunTime = System.currentTimeMillis - _startTime
-    var t = _taskDescriptors.next
-    while (t != _taskDescriptors && t.value.arrivalTime <= currentRunTime) {
-      if (t.value.resources <= offerResources) {
-        taskInfos.add(createTaskInfo(offer.getSlaveId(), t.value))
-        offerResources = offerResources - t.value.resources
-        _createdTasks += 1
-        t = t.remove()
+
+    // Remove tasks that have exceeded the number of offer attempts
+    val forfeited = _taskDescriptors.filter(_.offerAttempts > offerAttempts)
+    log.info(s"Forfeiting [${forfeited.size} tasks]")
+    _taskDescriptors = _taskDescriptors diff forfeited
+    _forfeitedTasks += forfeited.size
+
+    val taskInfos = mutable.Buffer[TaskInfo]()
+
+    val (scheduled, reserved) =
+      _taskDescriptors.view.map { td =>
+        if (td.arrivalTime <= currentRunTime)
+          td.offerAttempts += 1
+        td
+      }.partition { td =>
+        td.arrivalTime <= currentRunTime && td.resources <= offerResources
       }
-      else {
-        if (t.value.offerAttempts >= offerAttempts) {
-          _forfeitedTasks += 1
-          t = t.remove()
-        }
-        else {
-          t.value.offerAttempts += 1
-          t = t.next
-        }
-      }
-    }
-    return taskInfos
+
+    _taskDescriptors = mutable.Queue(reserved: _*)
+
+    taskInfos.asJava
   }
 }

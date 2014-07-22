@@ -1,8 +1,9 @@
 package io.mesosphere.mesosaurus
 
+import io.mesosphere.mesosaurus.tasks.TaskGenerator
 import org.apache.mesos.{ Scheduler, SchedulerDriver }
 import org.apache.mesos.Protos._
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 /**
   * Mesos scheduler for the Mesosaurus framework.
@@ -30,15 +31,15 @@ class MesosaurusScheduler(private val _taskGenerator: TaskGenerator)
 
   def resourceOffers(driver: SchedulerDriver, offers: java.util.List[Offer]): Unit = {
     if (_taskGenerator.doneCreatingTasks()) {
-      for (offer <- offers) {
+      for (offer <- offers.asScala) {
         driver.declineOffer(offer.getId());
       }
     }
     else {
       log.info("Scheduler.resourceOffers")
-      for (offer <- offers) {
+      for (offer <- offers.asScala) {
         val taskInfos = _taskGenerator.generateTaskInfos(offer);
-        driver.launchTasks(offer.getId(), taskInfos, _filters);
+        driver.launchTasks(Seq(offer.getId).asJava, taskInfos, _filters);
       }
     }
   }

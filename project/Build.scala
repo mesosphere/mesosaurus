@@ -14,7 +14,23 @@ object MesosaurusBuild extends Build {
   val ORGANIZATION    = "io.mesosphere"
   val PROJECT_NAME    = "mesosaurus"
   val PROJECT_VERSION = "0.1.0"
-  val SCALA_VERSION   = "2.10.3"
+  val SCALA_VERSION   = "2.10.4"
+
+
+  //////////////////////////////////////////////////////////////////////////////
+  // DEPENDENCY VERSIONS
+  //////////////////////////////////////////////////////////////////////////////
+
+  val ARGPARSE4J_VERSION      = "0.4.3"
+  val JODA_CONVERT_VERSION    = "1.6"
+  val JODA_TIME_VERSION       = "2.3"
+  val LOGBACK_VERSION         = "1.0.9"
+  val MESOS_VERSION           = "0.19.1"
+  val SCALATEST_VERSION       = "2.1.5"
+  val SLF4J_VERSION           = "1.7.2"
+  val TISCAF_VERSION          = "0.8"
+  val TYPESAFE_CONFIG_VERSION = "1.0.2"
+  val UNFILTERED_VERSION      = "0.7.1"
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -49,14 +65,18 @@ object MesosaurusBuild extends Build {
     scalaVersion := SCALA_VERSION,
 
     libraryDependencies ++= Seq(
-      "org.apache.mesos"             % "mesos"           % "0.15.0",
-      "com.typesafe"                 % "config"          % "1.0.2",
-      "org.slf4j"                    % "slf4j-api"       % "1.7.2",
-      "ch.qos.logback"               % "logback-classic" % "1.0.9"   % "runtime",
-      "net.sourceforge.argparse4j" 	 % "argparse4j" 	   % "0.4.3",
-      "junit" 			                 % "junit" 			     % "4.11" 	 % "test",
-      "org.scalatest"               %% "scalatest"       % "2.0.M5b" % "test",
-      "org.gnieh"                   %% "tiscaf"          % "0.8"
+      "net.databinder"              %% "unfiltered-filter" % UNFILTERED_VERSION,
+      "net.databinder"              %% "unfiltered-jetty"  % UNFILTERED_VERSION,
+      "org.apache.mesos"             % "mesos"             % MESOS_VERSION,
+      "com.typesafe"                 % "config"            % TYPESAFE_CONFIG_VERSION,
+      "org.slf4j"                    % "slf4j-api"         % SLF4J_VERSION,
+      "ch.qos.logback"               % "logback-classic"   % LOGBACK_VERSION   % "runtime",
+      "joda-time"                    % "joda-time"         % JODA_TIME_VERSION,
+      "org.joda"                     % "joda-convert"      % JODA_CONVERT_VERSION,
+      "net.sourceforge.argparse4j"   % "argparse4j"        % ARGPARSE4J_VERSION,
+      "junit"                        % "junit"             % "4.11"    % "test",
+      "org.scalatest"               %% "scalatest"         % SCALATEST_VERSION % "test",
+      "org.gnieh"                   %% "tiscaf"            % TISCAF_VERSION
     ),
 
     scalacOptions in Compile ++= Seq(
