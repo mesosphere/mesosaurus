@@ -171,6 +171,7 @@ class TaskGenerator(
           if (td.resources <= offerResources) {
             taskInfos += createTaskInfo(offer.getSlaveId, td)
             offerResources = offerResources - td.resources
+            _createdTasks += 1
           }
         }
         td
@@ -178,7 +179,6 @@ class TaskGenerator(
         td.arrivalTime <= currentRunTime && td.resources <= offerResources
       }
 
-    _createdTasks += scheduled.size
     _taskDescriptors = mutable.Queue(notScheduled: _*)
     taskInfos.asJava
   }
