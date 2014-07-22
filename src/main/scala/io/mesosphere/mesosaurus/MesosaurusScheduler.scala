@@ -29,6 +29,9 @@ class MesosaurusScheduler(private val _taskGenerator: TaskGenerator)
   private val _filters = Filters.newBuilder().setRefuseSeconds(1).build()
 
   def resourceOffers(driver: SchedulerDriver, offers: java.util.List[Offer]): Unit = {
+
+    TaskTracker.queueLength(_taskGenerator.numPendingTasks, Timestamp.now)
+
     if (_taskGenerator.doneCreatingTasks()) {
       for (offer <- offers.asScala) {
         driver.declineOffer(offer.getId());
@@ -37,7 +40,8 @@ class MesosaurusScheduler(private val _taskGenerator: TaskGenerator)
     else {
       log.info("Scheduler.resourceOffers")
       for (offer <- offers.asScala) {
-        val taskInfos = _taskGenerator.generateTaskInfos(offer);
+        TaskTracker.queueLength(_taskGenerator.numPendingTasks, Timestamp.now)
+        val taskInfos = _taskGenerator.generateTaskInfos(offer)
         for (taskInfo <- taskInfos.asScala) {
           TaskTracker.launched(taskInfo.getTaskId.getValue, Timestamp.now)
         }

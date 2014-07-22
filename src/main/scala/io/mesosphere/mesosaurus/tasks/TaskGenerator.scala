@@ -123,7 +123,7 @@ class TaskGenerator(
 
   }
 
-  val startTime = System.currentTimeMillis
+  lazy val startTime = System.currentTimeMillis
 
   private var _taskDescriptors: mutable.Queue[TaskDescriptor] = {
     val arrivalTimeRandom = new PoissonRandom(arrivalTimeMean)
