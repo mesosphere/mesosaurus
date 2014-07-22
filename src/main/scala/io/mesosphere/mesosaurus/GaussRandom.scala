@@ -24,42 +24,42 @@ import scala.util._
   * http://en.wikipedia.org/wiki/Rejection_sampling
   */
 class GaussRandom(mean: Double, sigma: Double, val definitionRangeSigmas: Int = 5) {
-    if (sigma <= 0) {
-        throw new IllegalArgumentException()
+  if (sigma <= 0) {
+    throw new IllegalArgumentException()
+  }
+
+  private val _definitionRangeHalf = definitionRangeSigmas * sigma
+  private val _seed = mean.toLong ^ sigma.toLong ^ System.currentTimeMillis;
+  private val _random = new Random(_seed);
+
+  /**
+    * @return the probability of value x for this distribution
+    */
+  def probability(x: Double): Double = {
+    return (1 / (sigma * math.sqrt(2 * math.Pi))) *
+      math.exp(-math.pow(x - mean, 2) / (2 * math.pow(sigma, 2)))
+  }
+
+  /**
+    * The maximum value of this distribution function,
+    * which is also the probability of the mean.
+    */
+  val maxProbability = probability(mean)
+
+  /**
+    * @return a random value with this distribution
+    */
+  def next(): Double = {
+    while (true) {
+      val x = mean + (_random.nextDouble() * 2 * _definitionRangeHalf) - _definitionRangeHalf
+      val y = probability(x)
+      val r = _random.nextDouble() * maxProbability
+      if (r < y) {
+        return x
+      }
     }
-
-    private val _definitionRangeHalf = definitionRangeSigmas * sigma
-    private val _seed = mean.toLong ^ sigma.toLong ^ System.currentTimeMillis;
-    private val _random = new Random(_seed);
-
-    /**
-      * @return the probability of value x for this distribution
-      */
-    def probability(x: Double): Double = {
-        return (1 / (sigma * math.sqrt(2 * math.Pi))) *
-            math.exp(-math.pow(x - mean, 2) / (2 * math.pow(sigma, 2)))
-    }
-
-    /**
-      * The maximum value of this distribution function,
-      * which is also the probability of the mean.
-      */
-    val maxProbability = probability(mean)
-
-    /**
-      * @return a random value with this distribution
-      */
-    def next(): Double = {
-        while (true) {
-            val x = mean + (_random.nextDouble() * 2 * _definitionRangeHalf) - _definitionRangeHalf
-            val y = probability(x)
-            val r = _random.nextDouble() * maxProbability
-            if (r < y) {
-                return x
-            }
-        }
-        // unreachable:
-        throw new RuntimeException
-    }
+    // unreachable:
+    throw new RuntimeException
+  }
 
 }
