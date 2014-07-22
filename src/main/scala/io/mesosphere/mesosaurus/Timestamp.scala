@@ -17,6 +17,8 @@ case class Timestamp(dateTime: DateTime) extends Ordered[Timestamp] {
 
   def compare(that: Timestamp) = this.time compareTo that.time
 
+  def millis(): Long = dateTime.getMillis
+
   override def toString: String = time.toString
 }
 

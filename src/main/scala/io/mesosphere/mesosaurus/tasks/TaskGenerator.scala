@@ -138,17 +138,13 @@ class TaskGenerator(
       val mem = memRandom.next().toLong
       val resources = new Resources(cpus, mem)
       queue += TaskDescriptor(id, arrivalTime, duration, resources)
-      TaskTracker.arrived(s"$id", Timestamp.now)
+      TaskTracker.arrived(s"$id", Timestamp(startTime + arrivalTime))
     }
 
     queue
   }
 
-  private var _startTime = System.currentTimeMillis
-
-  def start() = {
-    _startTime = System.currentTimeMillis
-  }
+  val startTime = System.currentTimeMillis
 
   /**
     * NB: This method removes tasks that have exceeded the maximum number of
@@ -156,7 +152,7 @@ class TaskGenerator(
     */
   def generateTaskInfos(offer: Offer): java.util.Collection[TaskInfo] = {
     var offerResources = new Resources(offer)
-    val currentRunTime = System.currentTimeMillis - _startTime
+    val currentRunTime = System.currentTimeMillis - startTime
 
     // Remove tasks that have exceeded the number of offer attempts
     val (forfeited, retained) =

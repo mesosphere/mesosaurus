@@ -1,12 +1,13 @@
 package io.mesosphere.mesosaurus
 
-import io.mesosphere.mesosaurus.tasks.TaskGenerator
+import io.mesosphere.mesosaurus.tasks._
 import com.typesafe.config._
 import net.sourceforge.argparse4j._
 import net.sourceforge.argparse4j.impl._
 import net.sourceforge.argparse4j.inf._
 import org.apache.mesos._
 import org.apache.mesos.Protos._
+import java.io.{ File, FileWriter }
 import java.net.URI
 
 /**
@@ -194,6 +195,20 @@ object Mesosaurus extends Logging {
     return null
   }
 
+  def writePlot(startTime: Timestamp, taskTracker: TaskTracker, outFile: File) {
+
+    val fw = new FileWriter(outFile)
+
+    // write dat file for task arrival
+    taskTracker.history.foreach {
+      case (id, taskHistory) =>
+        val relativeArrival = taskHistory.arrived.millis - startTime.millis
+        fw.write(s"7000 $relativeArrival\n")
+    }
+
+    fw.close
+  }
+
   def main(arguments: Array[String]): Unit = {
     val (mesosMaster, failoverTimeout, taskGenerator) = parseCommandLine(arguments)
     val scheduler = new MesosaurusScheduler(taskGenerator)
@@ -212,6 +227,13 @@ object Mesosaurus extends Logging {
     // WebServer.start
     val driverStatus = schedulerDriver.run()
     val exitStatus = if (driverStatus == Status.DRIVER_STOPPED) 0 else 1
+
+    writePlot(
+      Timestamp(taskGenerator.startTime),
+      TaskTracker,
+      new File("results/arrival.dat")
+    )
+
     schedulerDriver.stop()
     // WebServer.stop
     System.exit(exitStatus)

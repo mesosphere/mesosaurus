@@ -18,7 +18,6 @@ class MesosaurusScheduler(private val _taskGenerator: TaskGenerator)
     frameworkId: FrameworkID,
     masterInfo: MasterInfo): Unit = {
     log.info("Scheduler.registered")
-    _taskGenerator.start();
   }
 
   def reregistered(
