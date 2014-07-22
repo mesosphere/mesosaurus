@@ -1,5 +1,5 @@
 set terminal png
-set output 'results/arrival.png'
+set output 'results/timeline.png'
 set ytics scale 0,0 format ""
 set xlabel "Elapsed time (ms)"
 set yrange [0:8000]
