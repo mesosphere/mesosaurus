@@ -156,24 +156,30 @@ class TaskGenerator(
     val currentRunTime = System.currentTimeMillis - _startTime
 
     // Remove tasks that have exceeded the number of offer attempts
-    val forfeited = _taskDescriptors.filter(_.offerAttempts > offerAttempts)
+    val (forfeited, retained) =
+      _taskDescriptors.partition(_.offerAttempts > offerAttempts)
     log.info(s"Forfeiting [${forfeited.size} tasks]")
-    _taskDescriptors = _taskDescriptors diff forfeited
+    _taskDescriptors = mutable.Queue(retained: _*)
     _forfeitedTasks += forfeited.size
 
     val taskInfos = mutable.Buffer[TaskInfo]()
 
-    val (scheduled, reserved) =
+    val (scheduled, notScheduled) =
       _taskDescriptors.view.map { td =>
-        if (td.arrivalTime <= currentRunTime)
+        if (td.arrivalTime <= currentRunTime) {
           td.offerAttempts += 1
+          if (td.resources <= offerResources) {
+            taskInfos += createTaskInfo(offer.getSlaveId, td)
+            offerResources = offerResources - td.resources
+          }
+        }
         td
       }.partition { td =>
         td.arrivalTime <= currentRunTime && td.resources <= offerResources
       }
 
-    _taskDescriptors = mutable.Queue(reserved: _*)
-
+    _createdTasks += scheduled.size
+    _taskDescriptors = mutable.Queue(notScheduled: _*)
     taskInfos.asJava
   }
 }
