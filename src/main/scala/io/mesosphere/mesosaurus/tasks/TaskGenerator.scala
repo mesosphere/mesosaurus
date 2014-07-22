@@ -142,7 +142,7 @@ class TaskGenerator(
     queue
   }
 
-  private val _startTime = System.currentTimeMillis
+  private var _startTime = System.currentTimeMillis
 
   def start() = {
     _startTime = System.currentTimeMillis
