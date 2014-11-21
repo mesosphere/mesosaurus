@@ -7,6 +7,11 @@ import net.sourceforge.argparse4j.inf._
 import org.apache.mesos._
 import org.apache.mesos.Protos._
 
+// A global variable for the framework port
+object Port {
+    var _port: Int = 9898
+}
+
 /**
   * Mesos benchmarking framework
   * that generates and schedules tasks in configurable ways
@@ -34,6 +39,7 @@ object Mesosaurus extends Logging {
     private val DEFAULT_CPUS = 1
     private val DEFAULT_MEM = 128
     private val DEFAULT_SIGMA_FACTOR = 5
+    private val DEFAULT_PORT = 9898
 
     // A new command line parameter type for argparse4j that forces Int values to be positive
     private object UnsignedInteger extends ArgumentType[Int] {
@@ -95,6 +101,7 @@ object Mesosaurus extends Logging {
     private val CPUS_SIGMA = "cpus_sigma"
     private val MEM = "mem"
     private val MEM_SIGMA = "mem_sigma"
+    private val PORT = "port"
 
     private def addOption(parser: ArgumentParser, optionName: String): Argument = {
         return parser.addArgument("-" + optionName)
@@ -112,6 +119,7 @@ object Mesosaurus extends Logging {
         addOption(parser, CPUS_SIGMA).`type`(UnsignedDouble).help("cpus standard deviation")
         addOption(parser, MEM).`type`(UnsignedLong).help("mean # MB of memory")
         addOption(parser, MEM_SIGMA).`type`(UnsignedLong).help("memory standard deviation in MB")
+        addOption(parser, PORT).`type`(UnsignedInteger).help("framework port to use")
     }
 
     // Because Scala cannot disambiguate the overloaded Java method 
@@ -136,7 +144,7 @@ object Mesosaurus extends Logging {
         return if (options.get(name) != null) options.getDouble(name).doubleValue() else defaultValue
     }
 
-    private def parseCommandLine(arguments: Array[String]): (String, Int, TaskGenerator) = {
+    private def parseCommandLine(arguments: Array[String]): (String, Int, Int, TaskGenerator) = {
         val parser = ArgumentParsers.newArgumentParser("mesosaurus")
             .defaultHelp(true)
             .description("benchmarking framework for Mesos")
@@ -166,7 +174,8 @@ object Mesosaurus extends Logging {
             if (memSigma <= 0) {
                 throw new ArgumentParserException("mem standard deviation must be > 0", parser)
             }
-            return (master, failover, new TaskGenerator(tasks, duration, durationSigma, arrival, load, cpus, cpusSigma, mem, memSigma))
+            val port = getInt(options, PORT, DEFAULT_PORT)
+            return (master, failover, port, new TaskGenerator(tasks, duration, durationSigma, arrival, load, cpus, cpusSigma, mem, memSigma))
         }
         catch {
             case e: ArgumentParserException =>
@@ -177,7 +186,8 @@ object Mesosaurus extends Logging {
     }
 
     def main(arguments: Array[String]): Unit = {
-        val (mesosMaster, failoverTimeout, taskGenerator) = parseCommandLine(arguments)
+        val (mesosMaster, failoverTimeout, port, taskGenerator) = parseCommandLine(arguments)
+        Port._port = port 
         val scheduler = new MesosaurusScheduler(taskGenerator)
 
         val frameworkName = "Mesosaurus (Scala)"
