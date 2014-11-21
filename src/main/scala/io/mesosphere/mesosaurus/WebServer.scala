@@ -4,11 +4,12 @@ import tiscaf._
 
 object WebServer extends HServer {
 
-    //def _port = 8080
-    def ports = Set(Port._port)
+    def _port = 8080
+
+    def ports = Set(_port)
 
     def url(): String = {
-        return "http://" + java.net.InetAddress.getLocalHost().getHostAddress() + ":" + Port._port
+        return "http://" + java.net.InetAddress.getLocalHost().getHostAddress() + ":" + _port
     }
 
     override protected def startStopListener {
