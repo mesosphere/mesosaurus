@@ -150,9 +150,9 @@ int main(int argc, char** argv) {
   }
 
   // Join threads.
-  for (vector<pthread_t*>::iterator it = threads.begin(); it != threads.end();
-      it++) {
-    pthread_t* thread = *it;
+  // fix for gcc 4.7 on google cloud
+  for (int i= 0; i < threads.size(); i++) {
+    pthread_t* thread = threads[i];
     int thread_status;
     int status;
 
