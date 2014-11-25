@@ -190,7 +190,7 @@ object Mesosaurus extends Logging {
         Port._port = port 
         val scheduler = new MesosaurusScheduler(taskGenerator)
 
-        val frameworkName = "Mesosaurus (Scala)"
+        val frameworkName = "Mesosaurus"
         log.info("Hello from framework {}!", frameworkName)
 
         val frameworkInfo = FrameworkInfo.newBuilder()
