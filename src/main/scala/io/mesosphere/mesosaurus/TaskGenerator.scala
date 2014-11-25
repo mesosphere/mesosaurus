@@ -69,7 +69,7 @@ class TaskGenerator(requestedTasks: Int,
             .setValue("./" + TASK_PROGRAM + " " + taskDescriptor.commandArguments())
             .addUris(uri)
         return TaskInfo.newBuilder()
-            .setName("task " + taskID.getValue())
+            .setName("task" + taskID.getValue())
             .setTaskId(taskID)
             .setSlaveId(slaveID)
             .addResources(Resource.newBuilder()
