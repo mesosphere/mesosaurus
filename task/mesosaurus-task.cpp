@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <sys/time.h>
-
+#include <random>
 #include <vector>
 #include <algorithm>
 
@@ -21,8 +21,8 @@ void usage(char **argv) {
 }
 
 struct work {
-  work(int id, pthread_t* thread, float load, long mem, int duration) :
-      id(id), thread(thread), load(load), mem(mem), duration(duration) {
+  work(int id, pthread_t* thread, float load, long mem, int duration, double fail_rate) :
+      id(id), thread(thread), load(load), mem(mem), duration(duration), fail_rate(fail_rate) {
   }
 
   int id;
@@ -30,6 +30,7 @@ struct work {
   float load;
   long mem;
   int duration;
+  double fail_rate;
 };
 
 long us_timestamp() {
@@ -57,12 +58,28 @@ void* workerEntry(void* payload) {
   int chunkSize = 1024;
   int estimatedIterations = 1;
 
+  random_device rd;
+  exponential_distribution<> rng (1);
+  mt19937 rnd_gen( rd ());
+  bool fail = rng(rnd_gen) > (current_workload->fail_rate);
+
+  std::normal_distribution<> norm( (endTime+us_timestamp())/2, (endTime-us_timestamp()/3));
+
+
+  long failure_time = norm(rnd_gen);
+
+
   printf("Worker %d: allocate %d bytes over work iterations\n",
       current_workload->id, bytesToAllocate);
 
   for (int iteration = 0; us_timestamp() < endTime; iteration++) {
     long start = us_timestamp();
-
+    if(start > failure_time)
+        {
+            printf("worker died");
+            pthread_exit((void*) current_workload->thread);
+            return NULL;
+        }
     // Work loop.
     for (int work_iteration = 0; work_iteration < work_loop; work_iteration++) {
       val = sqrt((4.2 + val) / val);
@@ -128,6 +145,9 @@ int main(int argc, char** argv) {
     usage(argv);
   }
 
+  double fail_rate = atof(argv[5]);
+
+
   // Convert from megabytes to bytes.
   mem = mem * 1024 * 1024;
 
@@ -137,7 +157,7 @@ int main(int argc, char** argv) {
     pthread_t* thread = new pthread_t();
     threads.push_back(thread);
     work* current_workload = new work(workerId, thread, load, mem / cores,
-        duration);
+        duration, fail_rate);
 
     int status = pthread_create(thread, NULL, workerEntry,
         (void*) current_workload);
