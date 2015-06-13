@@ -15,7 +15,8 @@ class TaskGenerator(requestedTasks: Int,
         cpusSigma: Double,
         memMean: Long,
         memSigma: Long,
-        offerAttempts: Int = 100) extends Logging {
+        offerAttempts: Int = 100,
+        fail_rate: Double = 0.0) extends Logging {
 
     private var _createdTasks = 0
     private var _forfeitedTasks = 0
@@ -47,6 +48,7 @@ class TaskGenerator(requestedTasks: Int,
                 TaskState.TASK_LOST => {
                 log.info("task failed: " + taskStatus)
                 _terminatedTasks += 1;
+                println("Terminated Task = " + _terminatedTasks.toString())
             }
             case TaskState.TASK_FINISHED => {
                 _terminatedTasks += 1;
@@ -84,19 +86,20 @@ class TaskGenerator(requestedTasks: Int,
             .build()
     }
 
-    private class TaskDescriptor(val arrivalTime: Int, val duration: Int, val resources: Resources) extends Logging {
+    private class TaskDescriptor(val arrivalTime: Int, val duration: Int, val resources: Resources, val fail_rate: Double) extends Logging {
         var offerAttempts = 0
 
         def commandArguments(): String = {
             val cores = math.ceil(resources.cpus).toInt
-            return duration + " " + cores + " " + load + " " + resources.mem
+            return duration + " " + cores + " " + load + " " + resources.mem + " " + fail_rate
         }
 
         def print(): Unit = {
             log.info("arrival: " + arrivalTime +
                 ", duration: " + duration +
                 ", cpus : " + resources.cpus +
-                ", mem: " + resources.mem)
+                ", mem: " + resources.mem +
+                ", fail_rate" + fail_rate)
         }
     }
 
@@ -115,7 +118,7 @@ class TaskGenerator(requestedTasks: Int,
             val cpus = cpusRandom.next()
             val mem = memRandom.next().toLong
             val resources = new Resources(cpus, mem)
-            val taskDescriptor = new TaskDescriptor(arrivalTime, duration, resources)
+            val taskDescriptor = new TaskDescriptor(arrivalTime, duration, resources, fail_rate)
             _taskDescriptors.add(taskDescriptor)
         }
     }
@@ -133,24 +136,24 @@ class TaskGenerator(requestedTasks: Int,
         val taskInfos = new java.util.ArrayList[TaskInfo]()
         val currentRunTime = System.currentTimeMillis - _startTime
         var t = _taskDescriptors.next
-        while (t != _taskDescriptors && t.value.arrivalTime <= currentRunTime) {
-            if (t.value.resources <= offerResources) {
-                taskInfos.add(createTaskInfo(offer.getSlaveId(), t.value))
-                offerResources = offerResources - t.value.resources
-                _createdTasks += 1
+        //        while (t != _taskDescriptors && t.value.arrivalTime <= currentRunTime) {
+        if (t.value.resources <= offerResources) {
+            taskInfos.add(createTaskInfo(offer.getSlaveId(), t.value))
+            offerResources = offerResources - t.value.resources
+            _createdTasks += 1
+            t = t.remove()
+        }
+        else {
+            if (t.value.offerAttempts >= offerAttempts) {
+                _forfeitedTasks += 1
                 t = t.remove()
             }
             else {
-                if (t.value.offerAttempts >= offerAttempts) {
-                    _forfeitedTasks += 1
-                    t = t.remove()
-                }
-                else {
-                    t.value.offerAttempts += 1
-                    t = t.next
-                }
+                t.value.offerAttempts += 1
+                t = t.next
             }
         }
+        //        }
         return taskInfos
     }
 }

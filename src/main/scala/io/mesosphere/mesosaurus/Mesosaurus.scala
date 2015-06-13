@@ -24,8 +24,8 @@ object Mesosaurus extends Logging {
     private val MINUTE = 60 * SECOND
 
     // Naming conventions adopted from Mesos APIs:
-    // "cpus": a number of "CPU core shares". Examples: 
-    //   - 1.0 sums up to one core. 
+    // "cpus": a number of "CPU core shares". Examples:
+    //   - 1.0 sums up to one core.
     //   - If you use a quarter each of three cores, then you have 0.75 "shares".
     // "mem": RAM measured in M bytes, so 1 "mem" is (1024 * 1024) bytes
 
@@ -102,6 +102,7 @@ object Mesosaurus extends Logging {
     private val MEM = "mem"
     private val MEM_SIGMA = "mem_sigma"
     private val PORT = "port"
+    private val FAIL = "fail"
 
     private def addOption(parser: ArgumentParser, optionName: String): Argument = {
         return parser.addArgument("-" + optionName)
@@ -120,16 +121,16 @@ object Mesosaurus extends Logging {
         addOption(parser, MEM).`type`(UnsignedLong).help("mean # MB of memory")
         addOption(parser, MEM_SIGMA).`type`(UnsignedLong).help("memory standard deviation in MB")
         addOption(parser, PORT).`type`(UnsignedInteger).help("framework port to use")
-    }
+        addOption(parser, FAIL).`type`(UnsignedDouble).help("failure rate to use")
 
-    // Because Scala cannot disambiguate the overloaded Java method 
+    }
+    // Because Scala cannot disambiguate the overloaded Java method
     // net.sourceforge.argparse4j.inf.Argument.setDefault()
     // we set default values AFTER parsing,
     // using these helper functions:
 
     private def getString(options: Namespace, name: String, defaultValue: String): String = {
         return if (options.get(name) != null) options.getString(name) else defaultValue
-
     }
 
     private def getInt(options: Namespace, name: String, defaultValue: Int): Int = {
@@ -144,6 +145,8 @@ object Mesosaurus extends Logging {
         return if (options.get(name) != null) options.getDouble(name).doubleValue() else defaultValue
     }
 
+    private def parseDouble(s: String, d: Double) = { try { s.toDouble } catch { case _ => d } }
+
     private def parseCommandLine(arguments: Array[String]): (String, Int, Int, TaskGenerator) = {
         val parser = ArgumentParsers.newArgumentParser("mesosaurus")
             .defaultHelp(true)
@@ -157,6 +160,7 @@ object Mesosaurus extends Logging {
             val duration = getInt(options, DURATION, DEFAULT_TASK_DURATION)
             val arrival = getInt(options, ARRIVAL, DEFAULT_TASK_ARRIVAL_TIME)
             val durationSigma = getInt(options, DURATION_SIGMA, duration / DEFAULT_SIGMA_FACTOR)
+            val fail = getDouble(options, FAIL, 0.0)
             if (durationSigma <= 0) {
                 throw new ArgumentParserException("duration standard deviation must be > 0", parser)
             }
@@ -175,7 +179,7 @@ object Mesosaurus extends Logging {
                 throw new ArgumentParserException("mem standard deviation must be > 0", parser)
             }
             val port = getInt(options, PORT, DEFAULT_PORT)
-            return (master, failover, port, new TaskGenerator(tasks, duration, durationSigma, arrival, load, cpus, cpusSigma, mem, memSigma))
+            return (master, failover, port, new TaskGenerator(tasks, duration, durationSigma, arrival, load, cpus, cpusSigma, mem, memSigma, fail_rate = fail))
         }
         catch {
             case e: ArgumentParserException =>
@@ -187,7 +191,7 @@ object Mesosaurus extends Logging {
 
     def main(arguments: Array[String]): Unit = {
         val (mesosMaster, failoverTimeout, port, taskGenerator) = parseCommandLine(arguments)
-        Port._port = port 
+        Port._port = port
         val scheduler = new MesosaurusScheduler(taskGenerator)
 
         val frameworkName = "Mesosaurus"

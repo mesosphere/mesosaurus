@@ -59,26 +59,23 @@ void* workerEntry(void* payload) {
   int estimatedIterations = 1;
 
   random_device rd;
-  exponential_distribution<> rng (1);
+  normal_distribution<> rng (0.5,0.2);
   mt19937 rnd_gen( rd ());
   bool fail = rng(rnd_gen) > (current_workload->fail_rate);
-
-  std::normal_distribution<> norm( (endTime+us_timestamp())/2, (endTime-us_timestamp()/3));
-
+  long temp = (endTime+us_timestamp())/2;
+  normal_distribution<> norm(temp, (endTime-us_timestamp())/2);
 
   long failure_time = norm(rnd_gen);
-
 
   printf("Worker %d: allocate %d bytes over work iterations\n",
       current_workload->id, bytesToAllocate);
 
   for (int iteration = 0; us_timestamp() < endTime; iteration++) {
     long start = us_timestamp();
-    if(start > failure_time)
+    if(fail && start > failure_time)
         {
-            printf("worker died");
-            pthread_exit((void*) current_workload->thread);
-            return NULL;
+            printf("worker died for the greater good\n");
+            exit(EXIT_FAILURE);
         }
     // Work loop.
     for (int work_iteration = 0; work_iteration < work_loop; work_iteration++) {
