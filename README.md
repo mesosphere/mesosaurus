@@ -100,14 +100,5 @@ of its available command line options:
 
 ## Coding Conventions
 We try to follow the usual 
-[Scala Style Guide](http://docs.scala-lang.org/style/), 
-but we insist on two things:
-1. No TAB character is allowed anywhere in source code.
-2. Indentation must be 4 spaces, not 2.
-
-Furthermore:
-* We are still on the fence wrt. where exactly 
-  the colon in front of type expressions should be.
-
-More rules may be added or changed later 
-and global reformatting may occur to ensure compliance.
+[Scala Style Guide](http://docs.scala-lang.org/style/),
+but no TAB character is allowed anywhere in source code.
