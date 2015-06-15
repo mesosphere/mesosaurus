@@ -15,14 +15,14 @@ const int work_loop = 100000;
 
 void usage(char **argv) {
   fprintf(stderr,
-      "Usage: %s <duration (ms)> <number of cores> <average load (0.0 - 1.0)>"
-          " <average memory (megabytes)>\n", argv[0]);
+    "Usage: %s <duration (ms)> <number of cores> <average load (0.0 - 1.0)>"
+    " <average memory (megabytes)>\n", argv[0]);
   exit (EXIT_FAILURE);
 }
 
 struct work {
   work(int id, pthread_t* thread, float load, long mem, int duration, double fail_rate) :
-      id(id), thread(thread), load(load), mem(mem), duration(duration), fail_rate(fail_rate) {
+  id(id), thread(thread), load(load), mem(mem), duration(duration), fail_rate(fail_rate) {
   }
 
   int id;
@@ -68,15 +68,15 @@ void* workerEntry(void* payload) {
   long failureTime = norm(rnd_gen);
 
   printf("Worker %d: allocate %d bytes over work iterations\n",
-      current_workload->id, bytesToAllocate);
+    current_workload->id, bytesToAllocate);
 
   for (int iteration = 0; us_timestamp() < endTime; iteration++) {
     long start = us_timestamp();
     if(fail && start > failureTime)
-        {
-            printf("worker died for the greater good\n");
-            exit(EXIT_FAILURE);
-        }
+    {
+      printf("worker died for the greater good\n");
+      exit(EXIT_FAILURE);
+    }
     // Work loop.
     for (int work_iteration = 0; work_iteration < work_loop; work_iteration++) {
       val = sqrt((4.2 + val) / val);
@@ -92,7 +92,7 @@ void* workerEntry(void* payload) {
 
     long elapsed = us_timestamp() - start;
     long stale = ((elapsed / current_workload->load)
-        * (1 - current_workload->load));
+      * (1 - current_workload->load));
     usleep(stale);
 
     // Adjust estimated iterations left and chunk size.
@@ -132,7 +132,7 @@ int main(int argc, char** argv) {
 
   if ((load < 0) || (load > 1)) {
     fprintf(stderr, "Error: Load must be a floating point number"
-        " between 0 and 1.\n");
+      " between 0 and 1.\n");
     usage(argv);
   }
 
@@ -154,20 +154,20 @@ int main(int argc, char** argv) {
     pthread_t* thread = new pthread_t();
     threads.push_back(thread);
     work* current_workload = new work(workerId, thread, load, mem / cores,
-        duration, fail_rate);
+      duration, fail_rate);
 
     int status = pthread_create(thread, NULL, workerEntry,
-        (void*) current_workload);
+      (void*) current_workload);
     if (status) {
       fprintf(stderr, "Could not create worker thread %d: return code %d\n",
-          workerId, status);
+        workerId, status);
       exit (EXIT_FAILURE);
     }
 
   }
 
   // Join threads.
-    for (int i= 0; i < threads.size(); i++) {
+  for (int i= 0; i < threads.size(); i++) {
     pthread_t* thread = threads[i];
     int thread_status;
     int status;
