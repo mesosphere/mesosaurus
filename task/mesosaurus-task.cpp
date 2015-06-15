@@ -8,6 +8,7 @@
 #include <random>
 #include <vector>
 #include <algorithm>
+#include <cmath>
 
 using namespace std;
 
@@ -30,7 +31,7 @@ struct work {
   float load;
   long mem;
   int duration;
-  double failRate;
+  double fail_rate;
 };
 
 long us_timestamp() {
@@ -57,21 +58,28 @@ void* workerEntry(void* payload) {
   int allocated = 0;
   int chunkSize = 1024;
   int estimatedIterations = 1;
-
+  //decide if we are failing and what time we are going to fail at.
   random_device rd;
-  normal_distribution<> rng (0.5,0.2);
+  //double lambda = (-1 * log(1-current_workload->fail_rate));
+  //exponential_distribution<> rng (lambda);
+  //double f = rng(rnd_gen);
+  //later we may want to add exponential_distribution failure support?
   mt19937 rnd_gen( rd ());
-  bool fail = rng(rnd_gen) > (current_workload->fail_rate);
-  long temp = (endTime+us_timestamp())/2;
-  normal_distribution<> norm(temp, (endTime-us_timestamp())/2);
 
+
+  uniform_real_distribution<double> dist(0,1);
+
+  bool fail = dist(rnd_gen) < current_workload->fail_rate;
+  long mid = (endTime+us_timestamp())/2;
+  long stdev = (endTime-us_timestamp())/2;
+  normal_distribution<> norm(mid, stdev);
   long failureTime = norm(rnd_gen);
-
   printf("Worker %d: allocate %d bytes over work iterations\n",
     current_workload->id, bytesToAllocate);
 
   for (int iteration = 0; us_timestamp() < endTime; iteration++) {
     long start = us_timestamp();
+
     if(fail && start > failureTime)
     {
       printf("worker died for the greater good\n");

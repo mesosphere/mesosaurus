@@ -9,8 +9,8 @@ import scala.collection.JavaConversions._
   *
   * Delegates to a task source to generate (task info) descriptions of tasks to run.
   */
-  class MesosaurusScheduler(private val _taskGenerator: TaskGenerator)
-  extends Scheduler with Logging {
+class MesosaurusScheduler(private val _taskGenerator: TaskGenerator)
+        extends Scheduler with Logging {
 
     def registered(
         driver: SchedulerDriver,
