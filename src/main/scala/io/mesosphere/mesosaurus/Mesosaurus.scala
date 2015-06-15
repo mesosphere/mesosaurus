@@ -179,7 +179,8 @@ object Mesosaurus extends Logging {
                 throw new ArgumentParserException("mem standard deviation must be > 0", parser)
             }
             val port = getInt(options, PORT, DEFAULT_PORT)
-            return (master, failover, port, new TaskGenerator(tasks, duration, durationSigma, arrival, load, cpus, cpusSigma, mem, memSigma, fail_rate = fail))
+            return (master, failover, port, new TaskGenerator(tasks, duration,
+              durationSigma, arrival, load, cpus, cpusSigma, mem, memSigma, failRate = fail))
         }
         catch {
             case e: ArgumentParserException =>

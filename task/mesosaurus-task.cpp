@@ -30,7 +30,7 @@ struct work {
   float load;
   long mem;
   int duration;
-  double fail_rate;
+  double failRate;
 };
 
 long us_timestamp() {
@@ -65,14 +65,14 @@ void* workerEntry(void* payload) {
   long temp = (endTime+us_timestamp())/2;
   normal_distribution<> norm(temp, (endTime-us_timestamp())/2);
 
-  long failure_time = norm(rnd_gen);
+  long failureTime = norm(rnd_gen);
 
   printf("Worker %d: allocate %d bytes over work iterations\n",
       current_workload->id, bytesToAllocate);
 
   for (int iteration = 0; us_timestamp() < endTime; iteration++) {
     long start = us_timestamp();
-    if(fail && start > failure_time)
+    if(fail && start > failureTime)
         {
             printf("worker died for the greater good\n");
             exit(EXIT_FAILURE);

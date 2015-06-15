@@ -16,7 +16,7 @@ class TaskGenerator(requestedTasks: Int,
         memMean: Long,
         memSigma: Long,
         offerAttempts: Int = 100,
-        fail_rate: Double = 0.0) extends Logging {
+        failRate: Double = 0.0) extends Logging {
 
     private var _createdTasks = 0
     private var _forfeitedTasks = 0
@@ -99,7 +99,7 @@ class TaskGenerator(requestedTasks: Int,
                 ", duration: " + duration +
                 ", cpus : " + resources.cpus +
                 ", mem: " + resources.mem +
-                ", fail_rate" + fail_rate)
+                ", failRate" + failRate)
         }
     }
 
@@ -118,7 +118,7 @@ class TaskGenerator(requestedTasks: Int,
             val cpus = cpusRandom.next()
             val mem = memRandom.next().toLong
             val resources = new Resources(cpus, mem)
-            val taskDescriptor = new TaskDescriptor(arrivalTime, duration, resources, fail_rate)
+            val taskDescriptor = new TaskDescriptor(arrivalTime, duration, resources, failRate)
             _taskDescriptors.add(taskDescriptor)
         }
     }
@@ -136,14 +136,15 @@ class TaskGenerator(requestedTasks: Int,
         val taskInfos = new java.util.ArrayList[TaskInfo]()
         val currentRunTime = System.currentTimeMillis - _startTime
         var t = _taskDescriptors.next
-        //        while (t != _taskDescriptors && t.value.arrivalTime <= currentRunTime) {
-        if (t.value.resources <= offerResources) {
-            taskInfos.add(createTaskInfo(offer.getSlaveId(), t.value))
-            offerResources = offerResources - t.value.resources
-            _createdTasks += 1
-            t = t.remove()
-        }
-        else {
+        while (t != _taskDescriptors && t.value.arrivalTime <= currentRunTime) {
+          if (t.value.resources <= offerResources) {
+              taskInfos.add(createTaskInfo(offer.getSlaveId(), t.value))
+              offerResources = offerResources - t.value.resources
+              _createdTasks += 1
+              t = t.remove()
+              break
+              }
+          else {
             if (t.value.offerAttempts >= offerAttempts) {
                 _forfeitedTasks += 1
                 t = t.remove()
@@ -151,9 +152,9 @@ class TaskGenerator(requestedTasks: Int,
             else {
                 t.value.offerAttempts += 1
                 t = t.next
-            }
+                }
+              }
         }
-        //        }
         return taskInfos
     }
 }
