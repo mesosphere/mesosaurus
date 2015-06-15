@@ -65,21 +65,21 @@ void* workerEntry(void* payload) {
   //double f = rng(rnd_gen);
   //later we may want to add exponential_distribution failure support?
   mt19937 rnd_gen( rd ());
-
-
   uniform_real_distribution<double> dist(0,1);
 
   bool fail = dist(rnd_gen) < current_workload->fail_rate;
   long mid = (endTime+us_timestamp())/2;
   long stdev = (endTime-us_timestamp())/2;
-  normal_distribution<> norm(mid, stdev);
+  normal_distribution<double> norm(mid, stdev);
   long failureTime = norm(rnd_gen);
+
   printf("Worker %d: allocate %d bytes over work iterations\n",
     current_workload->id, bytesToAllocate);
 
   for (int iteration = 0; us_timestamp() < endTime; iteration++) {
     long start = us_timestamp();
-
+    //if this task is going to fail and we are past the time it is supposed to fail
+    //then fail.
     if(fail && start > failureTime)
     {
       printf("worker died for the greater good\n");

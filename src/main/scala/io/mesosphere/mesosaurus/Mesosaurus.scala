@@ -6,6 +6,7 @@ import net.sourceforge.argparse4j.impl._
 import net.sourceforge.argparse4j.inf._
 import org.apache.mesos._
 import org.apache.mesos.Protos._
+import scala.util.Try
 
 // A global variable for the framework port
 object Port {
@@ -40,6 +41,7 @@ object Mesosaurus extends Logging {
     private val DEFAULT_MEM = 128
     private val DEFAULT_SIGMA_FACTOR = 5
     private val DEFAULT_PORT = 9898
+    private val DEFAULT_PERCENT_FAIL = 0.0
 
     // A new command line parameter type for argparse4j that forces Int values to be positive
     private object UnsignedInteger extends ArgumentType[Int] {
@@ -57,9 +59,9 @@ object Mesosaurus extends Logging {
         }
     }
 
-    // A new command line parameter type for argparse4j that forces Long values to be positive
+    // A new command line parameter type for argparse that forces Long values to be positive
     private object UnsignedLong extends ArgumentType[Long] {
-        override def convert(parser: ArgumentParser, a4rgument: Argument, value: String): Long = {
+        override def convert(parser: ArgumentParser, argument: Argument, value: String): Long = {
             try {
                 val n: Long = java.lang.Long.parseLong(value)
                 if (n < 0) {
@@ -121,7 +123,7 @@ object Mesosaurus extends Logging {
         addOption(parser, MEM).`type`(UnsignedLong).help("mean # MB of memory")
         addOption(parser, MEM_SIGMA).`type`(UnsignedLong).help("memory standard deviation in MB")
         addOption(parser, PORT).`type`(UnsignedInteger).help("framework port to use")
-        addOption(parser, FAIL).`type`(UnsignedDouble).help("failure rate to use")
+        addOption(parser, FAIL).`type`(UnsignedDouble).help("percentage of tasks to fail")
 
     }
     // Because Scala cannot disambiguate the overloaded Java method
@@ -145,15 +147,6 @@ object Mesosaurus extends Logging {
         return if (options.get(name) != null) options.getDouble(name).doubleValue() else defaultValue
     }
 
-    private def parseDouble(s: String, d: Double): Double = {
-        try {
-            s.toDouble
-        }
-        catch {
-            case _ => d
-        }
-    }
-
     private def parseCommandLine(arguments: Array[String]): (String, Int, Int, TaskGenerator) = {
         val parser = ArgumentParsers.newArgumentParser("mesosaurus")
             .defaultHelp(true)
@@ -167,7 +160,7 @@ object Mesosaurus extends Logging {
             val duration = getInt(options, DURATION, DEFAULT_TASK_DURATION)
             val arrival = getInt(options, ARRIVAL, DEFAULT_TASK_ARRIVAL_TIME)
             val durationSigma = getInt(options, DURATION_SIGMA, duration / DEFAULT_SIGMA_FACTOR)
-            val fail = getDouble(options, FAIL, 0.0)
+            val fail = getDouble(options, FAIL, DEFAULT_PERCENT_FAIL)
             if (durationSigma <= 0) {
                 throw new ArgumentParserException("duration standard deviation must be > 0", parser)
             }
@@ -187,7 +180,7 @@ object Mesosaurus extends Logging {
             }
             val port = getInt(options, PORT, DEFAULT_PORT)
             return (master, failover, port, new TaskGenerator(tasks, duration,
-                durationSigma, arrival, load, cpus, cpusSigma, mem, memSigma, failRate = fail))
+                durationSigma, arrival, load, cpus, cpusSigma, mem, memSigma, percentFail = fail))
         }
         catch {
             case e: ArgumentParserException =>
