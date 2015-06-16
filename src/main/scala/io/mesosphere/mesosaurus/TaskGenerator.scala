@@ -15,7 +15,8 @@ class TaskGenerator(requestedTasks: Int,
         cpusSigma: Double,
         memMean: Long,
         memSigma: Long,
-        offerAttempts: Int = 100) extends Logging {
+        offerAttempts: Int = 100,
+        percentFail: Double = 0.0) extends Logging {
 
     private var _createdTasks = 0
     private var _forfeitedTasks = 0
@@ -29,6 +30,7 @@ class TaskGenerator(requestedTasks: Int,
     }
 
     private var _terminatedTasks = 0
+    private var _failedTasks = 0
 
     /**
       * Whether all existing tasks are done executing or to be finished immediately
@@ -42,11 +44,16 @@ class TaskGenerator(requestedTasks: Int,
 
     def observeTaskStatusUpdate(taskStatus: TaskStatus) = {
         taskStatus.getState() match {
-            case TaskState.TASK_FAILED |
-                TaskState.TASK_KILLED |
-                TaskState.TASK_LOST => {
+            case TaskState.TASK_FAILED => {
                 log.info("task failed: " + taskStatus)
+                _failedTasks += 1
+                _terminatedTasks += 1
+                println("Failed Tasks = " + _failedTasks.toString())
+            }
+            case TaskState.TASK_KILLED |
+                TaskState.TASK_LOST => {
                 _terminatedTasks += 1;
+                println("Terminated Task = " + _terminatedTasks.toString())
             }
             case TaskState.TASK_FINISHED => {
                 _terminatedTasks += 1;
@@ -84,19 +91,20 @@ class TaskGenerator(requestedTasks: Int,
             .build()
     }
 
-    private class TaskDescriptor(val arrivalTime: Int, val duration: Int, val resources: Resources) extends Logging {
+    private class TaskDescriptor(val arrivalTime: Int, val duration: Int, val resources: Resources, val percentFail: Double) extends Logging {
         var offerAttempts = 0
 
         def commandArguments(): String = {
             val cores = math.ceil(resources.cpus).toInt
-            return duration + " " + cores + " " + load + " " + resources.mem
+            return duration + " " + cores + " " + load + " " + resources.mem + " " + percentFail
         }
 
         def print(): Unit = {
             log.info("arrival: " + arrivalTime +
                 ", duration: " + duration +
                 ", cpus : " + resources.cpus +
-                ", mem: " + resources.mem)
+                ", mem: " + resources.mem +
+                ", percentFail" + percentFail)
         }
     }
 
@@ -115,7 +123,7 @@ class TaskGenerator(requestedTasks: Int,
             val cpus = cpusRandom.next()
             val mem = memRandom.next().toLong
             val resources = new Resources(cpus, mem)
-            val taskDescriptor = new TaskDescriptor(arrivalTime, duration, resources)
+            val taskDescriptor = new TaskDescriptor(arrivalTime, duration, resources, percentFail)
             _taskDescriptors.add(taskDescriptor)
         }
     }
@@ -139,6 +147,7 @@ class TaskGenerator(requestedTasks: Int,
                 offerResources = offerResources - t.value.resources
                 _createdTasks += 1
                 t = t.remove()
+
             }
             else {
                 if (t.value.offerAttempts >= offerAttempts) {

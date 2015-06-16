@@ -10,51 +10,51 @@ package io.mesosphere.mesosaurus
   */
 class Ring[V](val value: V) {
 
-  private var _previous = this
+    private var _previous = this
 
-  /**
-    * @return the ring element that precedes this
-    */
-  def previous(): Ring[V] = {
-    return _previous
-  }
+    /**
+      * @return the ring element that precedes this
+      */
+    def previous(): Ring[V] = {
+        return _previous
+    }
 
-  private var _next = this
+    private var _next = this
 
-  /**
-    * @return the ring element next after this
-    */
-  def next(): Ring[V] = {
-    return _next
-  }
+    /**
+      * @return the ring element next after this
+      */
+    def next(): Ring[V] = {
+        return _next
+    }
 
-  /**
-    * Add a ring element with the given \code{value} to the end of the list,
-    * i.e. as next element after the last so far,
-    * and as previous element to this.
-    */
-  def add(value: V) = {
-    val r = new Ring[V](value);
-    r._next = this;
-    r._previous = _previous;
-    _previous = r;
-    r._previous._next = r;
-  }
+    /**
+      * Add a ring element with the given \code{value} to the end of the list,
+      * i.e. as next element after the last so far,
+      * and as previous element to this.
+      */
+    def add(value: V) = {
+        val r = new Ring[V](value);
+        r._next = this;
+        r._previous = _previous;
+        _previous = r;
+        r._previous._next = r;
+    }
 
-  /**
-    * Remove this element from the list of multiple elements it is in, if any.
-    * If this is not the last element in its list, remove it,
-    * then return the element that was next in the list.
-    * If this is the last element, do nothing, and return it.
-    */
-  def remove(): Ring[V] = {
-    val p = _previous;
-    val n = _next;
-    p._next = n;
-    n._previous = p;
-    _previous = this;
-    _next = this;
-    return n;
-  }
+    /**
+      * Remove this element from the list of multiple elements it is in, if any.
+      * If this is not the last element in its list, remove it,
+      * then return the element that was next in the list.
+      * If this is the last element, do nothing, and return it.
+      */
+    def remove(): Ring[V] = {
+        val p = _previous;
+        val n = _next;
+        p._next = n;
+        n._previous = p;
+        _previous = this;
+        _next = this;
+        return n;
+    }
 
 }
