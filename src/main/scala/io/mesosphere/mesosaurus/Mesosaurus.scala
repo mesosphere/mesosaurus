@@ -160,7 +160,7 @@ object Mesosaurus extends Logging {
             val duration = getInt(options, DURATION, DEFAULT_TASK_DURATION)
             val arrival = getInt(options, ARRIVAL, DEFAULT_TASK_ARRIVAL_TIME)
             val durationSigma = getInt(options, DURATION_SIGMA, duration / DEFAULT_SIGMA_FACTOR)
-            val fail = getDouble(options, FAIL, DEFAULT_PERCENT_FAIL)
+            val percentageFail = getDouble(options, FAIL, DEFAULT_PERCENT_FAIL)
             if (durationSigma <= 0) {
                 throw new ArgumentParserException("duration standard deviation must be > 0", parser)
             }
@@ -180,7 +180,7 @@ object Mesosaurus extends Logging {
             }
             val port = getInt(options, PORT, DEFAULT_PORT)
             return (master, failover, port, new TaskGenerator(tasks, duration,
-                durationSigma, arrival, load, cpus, cpusSigma, mem, memSigma, percentFail = fail))
+                durationSigma, arrival, load, cpus, cpusSigma, mem, memSigma, percentFail = percentageFail))
         }
         catch {
             case e: ArgumentParserException =>
