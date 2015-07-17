@@ -29,6 +29,7 @@ performance analysis.
   use up computer resources in the amounts specified.
 * A configurable load factor for actual CPU load.
 * Automated provisioning of the task executor binary.
+* Configurable task failure rate.
   No manual installation steps on any slave nodes necessary.
 
 ## Planned Features

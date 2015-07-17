@@ -41,7 +41,7 @@ object Mesosaurus extends Logging {
     private val DEFAULT_MEM = 128
     private val DEFAULT_SIGMA_FACTOR = 5
     private val DEFAULT_PORT = 9898
-    private val DEFAULT_PERCENT_FAIL = 0.0
+    private val DEFAULT_FAIL_RATE = 0.0
 
     // A new command line parameter type for argparse4j that forces Int values to be positive
     private object UnsignedInteger extends ArgumentType[Int] {
@@ -123,7 +123,7 @@ object Mesosaurus extends Logging {
         addOption(parser, MEM).`type`(UnsignedLong).help("mean # MB of memory")
         addOption(parser, MEM_SIGMA).`type`(UnsignedLong).help("memory standard deviation in MB")
         addOption(parser, PORT).`type`(UnsignedInteger).help("framework port to use")
-        addOption(parser, FAIL).`type`(UnsignedDouble).help("percentage of tasks to fail")
+        addOption(parser, FAIL).`type`(UnsignedDouble).help("rate of task failure as a decimal between 0 and 1")
 
     }
     // Because Scala cannot disambiguate the overloaded Java method
@@ -160,9 +160,12 @@ object Mesosaurus extends Logging {
             val duration = getInt(options, DURATION, DEFAULT_TASK_DURATION)
             val arrival = getInt(options, ARRIVAL, DEFAULT_TASK_ARRIVAL_TIME)
             val durationSigma = getInt(options, DURATION_SIGMA, duration / DEFAULT_SIGMA_FACTOR)
-            val percentageFail = getDouble(options, FAIL, DEFAULT_PERCENT_FAIL)
             if (durationSigma <= 0) {
                 throw new ArgumentParserException("duration standard deviation must be > 0", parser)
+            }
+            val failRate = getDouble(options, FAIL, DEFAULT_FAIL_RATE)
+            if (failRate < 0 || failRate > 1) {
+                throw new ArgumentParserException("failure rate must be between 0.0 and 1.0", parser)
             }
             val load = getDouble(options, LOAD, DEFAULT_CPU_LOAD)
             if (load < 0 || load > 1) {
@@ -180,7 +183,7 @@ object Mesosaurus extends Logging {
             }
             val port = getInt(options, PORT, DEFAULT_PORT)
             return (master, failover, port, new TaskGenerator(tasks, duration,
-                durationSigma, arrival, load, cpus, cpusSigma, mem, memSigma, percentFail = percentageFail))
+                durationSigma, arrival, load, cpus, cpusSigma, mem, memSigma, failRate = failRate))
         }
         catch {
             case e: ArgumentParserException =>
