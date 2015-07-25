@@ -16,7 +16,7 @@ class TaskGenerator(requestedTasks: Int,
         memMean: Long,
         memSigma: Long,
         offerAttempts: Int = 100,
-        percentFail: Double = 0.0) extends Logging {
+        failRate: Double = 0.0) extends Logging {
 
     private var _createdTasks = 0
     private var _forfeitedTasks = 0
@@ -91,12 +91,12 @@ class TaskGenerator(requestedTasks: Int,
             .build()
     }
 
-    private class TaskDescriptor(val arrivalTime: Int, val duration: Int, val resources: Resources, val percentFail: Double) extends Logging {
+    private class TaskDescriptor(val arrivalTime: Int, val duration: Int, val resources: Resources, val failRate: Double) extends Logging {
         var offerAttempts = 0
 
         def commandArguments(): String = {
             val cores = math.ceil(resources.cpus).toInt
-            return duration + " " + cores + " " + load + " " + resources.mem + " " + percentFail
+            return duration + " " + cores + " " + load + " " + resources.mem + " " + failRate
         }
 
         def print(): Unit = {
@@ -104,7 +104,7 @@ class TaskGenerator(requestedTasks: Int,
                 ", duration: " + duration +
                 ", cpus : " + resources.cpus +
                 ", mem: " + resources.mem +
-                ", percentFail" + percentFail)
+                ", failure fail" + failRate)
         }
     }
 
@@ -123,7 +123,7 @@ class TaskGenerator(requestedTasks: Int,
             val cpus = cpusRandom.next()
             val mem = memRandom.next().toLong
             val resources = new Resources(cpus, mem)
-            val taskDescriptor = new TaskDescriptor(arrivalTime, duration, resources, percentFail)
+            val taskDescriptor = new TaskDescriptor(arrivalTime, duration, resources, failRate)
             _taskDescriptors.add(taskDescriptor)
         }
     }

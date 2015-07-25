@@ -17,7 +17,7 @@ const int work_loop = 100000;
 void usage(char **argv) {
   fprintf(stderr,
     "Usage: %s <duration (ms)> <number of cores> <average load (0.0 - 1.0)>"
-    " <average memory (megabytes)>\n", argv[0]);
+    " <average memory (megabytes)> <failure rate (decimal 0-1)\n", argv[0]);
   exit (EXIT_FAILURE);
 }
 
@@ -116,7 +116,7 @@ void* workerEntry(void* payload) {
 }
 
 int main(int argc, char** argv) {
-  if (argc < 5) {
+  if (argc < 6) {
     usage(argv);
   }
 
