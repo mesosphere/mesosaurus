@@ -57,7 +57,6 @@ void* workerEntry(void* payload) {
   int bytesToAllocate = current_workload->mem;
   int allocated = 0;
   int chunkSize = 1024;
-  int estimatedIterations = 1;
   //decide if we are failing and what time we are going to fail at.
   random_device rd;
   //double lambda = (-1 * log(1-current_workload->fail_rate));
@@ -175,9 +174,8 @@ int main(int argc, char** argv) {
   }
 
   // Join threads.
-  for (int i= 0; i < threads.size(); i++) {
+  for (size_t i = 0; i < threads.size(); i++) {
     pthread_t* thread = threads[i];
-    int thread_status;
     int status;
 
     status = pthread_join(*thread, (void**) &status);
