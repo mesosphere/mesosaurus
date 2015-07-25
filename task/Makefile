@@ -1,7 +1,7 @@
 TARGET = mesosaurus-task
 LIBS = -lpthread
-CC = g++
-CFLAGS = -g -Wall
+CXX = g++
+CXXFLAGS = -g -Wall -std=c++11
 
 .PHONY: default all clean
 
@@ -11,12 +11,12 @@ all: default
 OBJECTS = $(patsubst %.cpp, %.o, $(wildcard *.cpp))
 
 %.o: %.c $(HEADERS)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 .PRECIOUS: $(TARGET) $(OBJECTS)
 
 $(TARGET): $(OBJECTS)
-	$(CC) $(OBJECTS) $(CFLAGS) $(LIBS) -o $@
+	$(CXX) $(OBJECTS) $(CXXFLAGS) $(LIBS) -o $@
 clean:
 	-rm -f *.o
 	-rm -f $(TARGET)
