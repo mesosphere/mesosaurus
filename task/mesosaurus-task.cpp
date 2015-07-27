@@ -109,7 +109,7 @@ void* workerEntry(void* payload) {
   }
 
   printf("Worker %d: allocated %d bytes\n", current_workload->id, allocated);
-  printf("Worker %d: exitting\n", current_workload->id);
+  printf("Worker %d: exiting\n", current_workload->id);
   pthread_exit((void*) current_workload->thread);
   return NULL;
 }
