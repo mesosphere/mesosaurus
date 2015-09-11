@@ -54,9 +54,9 @@ void* workerEntry(void* payload) {
 
   // Compute end time.
   long endTime = us_timestamp() + (current_workload->duration * 1000);
-  int bytesToAllocate = current_workload->mem;
-  int allocated = 0;
-  int chunkSize = 1024;
+  long bytesToAllocate = current_workload->mem;
+  long allocated = 0;
+  long chunkSize = 1024;
   //decide if we are failing and what time we are going to fail at.
   random_device rd;
   //double lambda = (-1 * log(1-current_workload->fail_rate));
@@ -72,7 +72,7 @@ void* workerEntry(void* payload) {
   normal_distribution<double> norm(mid, stdev);
   long failureTime = norm(rnd_gen);
 
-  printf("Worker %d: allocate %d bytes over work iterations\n",
+  printf("Worker %d: allocate %ld bytes over work iterations\n",
     current_workload->id, bytesToAllocate);
 
   for (int iteration = 0; us_timestamp() < endTime; iteration++) {
@@ -104,11 +104,11 @@ void* workerEntry(void* payload) {
 
     // Adjust estimated iterations left and chunk size.
     long timeLeft = endTime - us_timestamp();
-    int iterations = max(timeLeft / elapsed, 1L);
-    chunkSize = max(bytesToAllocate / iterations, 8);
+    long iterations = std::max(timeLeft / elapsed, 1L);
+    chunkSize = std::max(bytesToAllocate / iterations, 8L);
   }
 
-  printf("Worker %d: allocated %d bytes\n", current_workload->id, allocated);
+  printf("Worker %d: allocated %ld bytes\n", current_workload->id, allocated);
   printf("Worker %d: exiting\n", current_workload->id);
   pthread_exit((void*) current_workload->thread);
   return NULL;
