@@ -147,7 +147,7 @@ class TaskGenerator(requestedTasks: Int,
                 offerResources = offerResources - t.value.resources
                 _createdTasks += 1
                 t = t.remove()
-
+                return taskInfos
             }
             else {
                 if (t.value.offerAttempts >= offerAttempts) {
