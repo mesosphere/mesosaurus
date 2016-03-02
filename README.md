@@ -62,12 +62,16 @@ performance analysis.
 3. Download and install libraries that Mesosaurus depends on and 
    translate the Scala source code to bytecode:
     <pre><code>
+    cd mesosaurus/
     sbt compile
     </code></pre>
 
-4. If you have a Mesos master running on your local machine 
-   you can simply execute Mesosaurus with default values for all settings:
+4. If you have a Mesos master running on your local machine,
+   check there is entry in /etc/hosts:
+     `<real machine ip> <hostname>`
+   then, you can simply execute Mesosaurus with default values for all settings:
     <pre><code>
+    cd mesosaurus/
     sbt run
     </code></pre>
 
